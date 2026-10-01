@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscar's MTG Master Vault & Synergy Engine</title>
+    <title>Oscar's MTG Master Vault & Analytics Suite</title>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -12,6 +12,7 @@
             --accent: #8b5cf6;
             --accent-hover: #7c3aed;
             --accent-green: #10b981;
+            --accent-gold: #f59e0b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --card-bg: #0d1527;
@@ -54,6 +55,7 @@
         }
 
         .badge-green { background-color: var(--accent-green); }
+        .badge-gold { background-color: var(--accent-gold); color: #0f172a; }
 
         .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
@@ -65,6 +67,7 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.2s;
         }
 
         .tab-btn.active {
@@ -86,7 +89,7 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 12px;
         }
 
@@ -96,8 +99,13 @@
             color: #fff;
             padding: 12px;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             width: 100%;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
         }
 
         .btn-action {
@@ -110,9 +118,51 @@
 
         .btn-action:hover { background-color: var(--accent-hover); }
 
+        /* MANA CURVE BAR CHART */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            height: 160px;
+            padding-top: 20px;
+            border-bottom: 2px solid var(--panel-border);
+            margin-bottom: 20px;
+        }
+
+        .chart-bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent) 0%, #4c1d95 100%);
+            border-radius: 6px 6px 0 0;
+            transition: height 0.4s ease;
+            min-height: 4px;
+        }
+
+        .chart-label {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .chart-count {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 16px;
         }
 
@@ -123,18 +173,32 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .card-img {
             width: 100%;
-            height: 260px;
+            height: 270px;
             object-fit: cover;
             background: #1e293b;
         }
 
         .card-info { padding: 12px; }
         .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; color: #fff; }
-        .card-type { font-size: 0.8rem; color: var(--text-muted); }
+        .card-meta { font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 6px; }
+
+        .tag-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+        .tag {
+            background-color: #334155;
+            color: #cbd5e1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+        .tag-set { background-color: #1e1b4b; color: #a5b4fc; border: 1px solid #4338ca; }
+        .tag-theme { background-color: #065f46; color: #a7f3d0; }
+        .tag-qty { background-color: var(--accent-gold); color: #0f172a; font-weight: bold; }
 
         .deck-output {
             display: grid;
@@ -171,32 +235,59 @@
 <div class="container">
     <header>
         <div>
-            <h1>Oscar's MTG Master Vault</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Self-Contained 1,157-Card Archival & Commander Engine</div>
+            <h1>Oscar's MTG Vault & Analytics Hub</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Mana Curve Analytics • Archetype Tagging • Multi-Attribute Search</div>
         </div>
         <div class="stats-bar">
-            <div class="badge" id="cardCounter">Loading Vault...</div>
+            <div class="badge" id="cardCounter">Vault Loading...</div>
             <div class="badge badge-green" id="commanderCounter">0 Commanders</div>
+            <div class="badge badge-gold" id="themeCounter">4 Universe Themes</div>
         </div>
     </header>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
-        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder</button>
+        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Vault Collection</button>
+        <button class="tab-btn" onclick="switchTab('builderTab', event)">Deckbuilder & Curve Analytics</button>
     </div>
 
-    <!-- SEARCH TAB -->
+    <!-- SEARCH TAB WITH MULTI-ATTRIBUTE SEARCH -->
     <div id="searchTab" class="tab-content active">
         <div class="panel">
             <div class="controls-grid">
-                <input type="text" id="searchInput" placeholder="Search cards by name..." onkeyup="filterCollection()">
+                <input type="text" id="searchInput" placeholder="Search card name, tag, or archetype..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
-                    <option value="ALL">All Card Types</option>
-                    <option value="Legendary">Legendary Commanders</option>
+                    <option value="ALL">All Types</option>
+                    <option value="Legendary">Commanders Only</option>
                     <option value="Creature">Creatures</option>
-                    <option value="Instant/Sorceries">Instants & Sorceries</option>
+                    <option value="Instant/Sorcery">Instants & Sorceries</option>
                     <option value="Artifact">Artifacts & Ramp</option>
                     <option value="Land">Lands</option>
+                </select>
+                <select id="cmcFilter" onchange="filterCollection()">
+                    <option value="ALL">All Mana Values (CMC)</option>
+                    <option value="0">0 CMC / Lands</option>
+                    <option value="1">1 CMC</option>
+                    <option value="2">2 CMC</option>
+                    <option value="3">3 CMC</option>
+                    <option value="4">4 CMC</option>
+                    <option value="5">5+ CMC</option>
+                </select>
+                <select id="colorFilter" onchange="filterCollection()">
+                    <option value="ALL">All Colors</option>
+                    <option value="B">Black</option>
+                    <option value="G">Green</option>
+                    <option value="W">White</option>
+                    <option value="R">Red</option>
+                    <option value="U">Blue</option>
+                    <option value="MULTI">Multicolor</option>
+                    <option value="COLORLESS">Colorless / Artifacts</option>
+                </select>
+                <select id="themeFilter" onchange="filterCollection()">
+                    <option value="ALL">All Archetype Themes</option>
+                    <option value="LOTR">Lord of the Rings (LTR)</option>
+                    <option value="TMNT">TMNT (TMN)</option>
+                    <option value="Fallout">Fallout (PIP)</option>
+                    <option value="Gothic">Gothic / Aristocrats / Berserk</option>
                 </select>
             </div>
         </div>
@@ -209,266 +300,740 @@
             <h2>Optimal Commander Deckbuilder Engine</h2>
             <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
                 <select id="commanderDropdown" style="flex: 2; min-width: 250px;"></select>
-                <button class="btn-action" style="flex: 1; min-width: 200px;" onclick="buildOptimalDeck()">Generate 100-Card Deck</button>
+                <button class="btn-action" style="flex: 1; min-width: 200px;" onclick="buildOptimalDeck()">Generate Deck & Mana Curve</button>
             </div>
         </div>
+
+        <div id="deckAnalyticsPanel" class="panel" style="display: none;">
+            <h3>Generated Deck Mana Curve Analytics</h3>
+            <div class="chart-container" id="manaChart"></div>
+        </div>
+
         <div class="deck-output" id="deckDisplay" style="display: none;"></div>
     </div>
 </div>
 
 <script>
-    // HARDCODED MASTER COLLECTION ARRAY (Parts 1-4)
+    // RICH METADATA MASTER COLLECTION ARRAY (Parts 1-4)
     const rawMasterList = [
         // PART 1 OF 4: CARDS 1 TO 300
-        "Myrkul, Lord of Bones", "Slimefoot, the Stowaway", "Frodo, Adventurous Hobbit", "Sam, Loyal Attendant",
-        "Oroku Saki, Shredder Rising", "Splinter, Hamato Yoshi", "Michelangelo, Game Master", "April O'Neil, Kunoichi Trainer",
-        "Jennika, Bad Apple Big Sister", "Vraska, Soul of Stone", "Vraska, the Cutting Glare", "Pia, Determined Rebuilder",
-        "Pia, Aether Ascetic", "Saheeli, Consul of Oversight", "Loot, the Nexus", "Winter, Team Player",
-        "Tetsuko Umezawa, Pursuer", "Arni, Renowned Champion", "Teyo, Lightshield Expert", "Koth, the Geomancer",
-        "Thranduil, Sindarin Liege", "Bilbo Baggins, Burglar", "Beorn, Reluctant Host", "Tom, Bert, and William",
-        "Galion, Elvenking's Butler", "Bombur, Gentle Dreamer", "Gollum the Abandoned", "Azog, Moria's Ruin",
-        "Bolg of the North", "Dori, Bearer of Friends", "Gandalf, Spark Starter", "Gollum, Silent Slinker",
-        "Lorcan, Warlock Collector", "Taborax, Hope's Demise", "Dreadfeast Demon", "Overseer of the Damned",
-        "Pestilence Demon", "Demon of Catastrophes", "Desecration Demon", "Demon of Loathing", "Mindwrack Demon",
-        "Rakshasa Debaser", "Crabomination", "Eater of Hope", "Thraxodemon", "Desolation Twin",
-        "Writhing Chrysalis", "Catacomb Sifter", "Bane of Bala Ged", "Silver Surfer, Galactus's Herald",
-        "Genesis Hydra", "Forgotten Ancient", "Sunblast Angel", "The Vision", "Migloz, Maze Crusher",
-        "Gallia, Tragic Host", "Tameshi, Reality Architect", "Tryo, Diamondblade Mage", "Arni, Humble Scribe",
-        "Saheeli, Jewel of Avishkar", "Xorn of the Homestead", "Thallid Devourer", "Sporecrown Thallid",
-        "Deathbloom Thallid", "Tukatongue Thallid", "Undercellar Myconid", "Yavimaya Sapherd", "Bloodthrone Vampire",
-        "Bloodflow Connoisseur", "Acolyte of Aclazotz", "Emrakul's Evangel", "Intrepid Tenderfoot", "Verdant Mastery",
-        "Ruthless Waterbender", "Molecular Modifier", "Meltsrider Eulogist", "Illvoi Operative", "Taster of Wares",
-        "Flight-Deck Coordinator", "Far Traveler", "Illvoi Infiltrator", "Uldaros Theorix", "Way of the Deathbringer",
-        "Rise of the Deathbringer", "Mechan Shieldmate", "Campus Crier", "Prudent Fateseer", "Inspired Tethermage",
-        "Carnivorous Cultivator", "Fatehold Chronologist", "Fateshaper Aspirant", "Sureshor Sower", "Guiding Hydra",
-        "Dreadflight Monstrosity", "Graft Surgeon", "Shattering Pegasus", "Arcane Amphisbaena", "Heartstring Puller",
-        "Konstruri Improviser", "Hexhaven Battalion", "Giltclaw Crusher", "Mind Murderer", "Vindictive Warden",
-        "Moldgraf Scavenger", "Greater Sandwurm", "Stitched Mangler", "Martyr of Dusk", "Kessig Dire Strain",
-        "Scrapsail Skaab", "Forge Devil", "Gatekeeper Vine", "Tackle Artist", "Roaring Embermare",
-        "Zealous Tormentor", "Erstwhile Trooper", "Wood Elves", "Brood Butcher", "Smothering Abomination",
-        "Zulaport Cutthroat", "Sifter of Skulls", "Pawn of Ulamog", "Pitiless Plunderer", "Viscera Seer",
-        "Carrion Feeder", "Reassembling Skeleton", "Persistent Specimen", "Doomed Traveler", "Hunted Witness",
-        "Gutterbones", "Gravecrawler", "Bloodsoaked Champion", "Dread Wanderer", "Cult Conscript",
-        "Tenacious Underdog", "Morbid Opportunist", "Midnight Reaper", "Grim Haruspex", "Species Specialist",
-        "Dark Prophecy", "Bastion of Remembrance", "Systemic Dissolution", "Nullify Matrix", "Corpse Explosion",
-        "Fleshbag Marauder", "Merciless Executioner", "Plaguecrafter", "Demon's Disciple", "Gravelighter",
-        "Accursed Marauder", "Corrupted Conviction", "Village Rites", "Deadly Dispute", "Fanatical Offering",
-        "Reckless Impulse", "Demand Answers", "Night's Whisper", "Read the Bones", "Sign in Blood",
-        "Altar's Reap", "Costly Plunder", "Bankrupt in Blood", "Eviscerator's Insight", "Nasty End",
-        "Trouble in Pairs", "Smothering Tithe", "Esper Sentinel", "Archivist of Oghma", "Monologue Tax",
-        "Loran of the Third Path", "Skyclave Apparition", "Solitude", "Grief", "Subtlety",
-        "Endurance", "Fury", "Force of Will", "Force of Negation", "Mana Drain",
-        "Counterspell", "Fierce Guardianship", "Deflecting Swat", "Deadly Rollick", "Flawless Maneuver",
-        "Heroic Intervention", "Teferi's Protection", "Cyclonic Rift", "Toxic Deluge", "Damnation",
-        "Wrath of God", "Blasphemous Act", "Vanquish the Horde", "Farewell", "Supreme Verdict",
-        "Languish", "Crux of Fate", "Extinction Event", "Shadows' Verdict", "Crippling Fear",
-        "Meathook Massacre", "Bastion of Remembrance", "Dreadhorde Invasion", "Bitterblossom", "Skrelv's Hive",
-        "Jadar, Ghoulcaller of Nephalia", "Poppet Stitcher", "Ophiomancer", "Grave Titan", "Wurmcoil Engine",
-        "Noxious Gearhulk", "Verdurous Gearhulk", "Combustible Gearhulk", "Torrential Gearhulk", "Cataclysmic Gearhulk",
-        "Aetherflux Reservoir", "Bolas's Citadel", "Sensei's Divining Top", "Skullclamp", "Ashnod's Altar",
-        "Phyrexian Altar", "Nim Deathmantle", "Sol Ring", "Arcane Signet", "Fellwar Stone",
-        "Thought Vessel", "Reliquary Tower", "Command Tower", "Exotic Orchard", "Path of Ancestry",
-        "City of Brass", "Mana Confluence", "Reflecting Pool", "Plaza of Heroes", "Secluded Courtyard",
-        "Unclaimed Territory", "Cavern of Souls", "Overgrown Tomb", "Temple Garden", "Godless Shrine",
-        "Stomping Ground", "Watery Grave", "Blood Crypt", "Breeding Pool", "Hallowed Fountain",
-        "Steam Vents", "Sacred Foundry", "Wooded Foothills", "Windswept Heath", "Bloodstained Mire",
-        "Polluted Delta", "Flooded Strand", "Marsh Flats", "Verdant Catacombs", "Misty Rainforest",
-        "Scalding Tarn", "Arid Mesa", "Llanowar Wastes", "Caves of Koilos", "Brushland", "Karplusan Forest",
-        "Underground River", "Sulfurous Springs", "Yavimaya Coast", "Adarkar Wastes", "Battlefield Forge",
-        "Shivan Reef", "Twilight Mire", "Fetid Heath", "Rugged Prairie", "Flooded Grove",
-        "Graven Cairns", "Cascading Cataracts", "Evolving Wilds", "Terramorphic Expanse", "Fabled Passage",
-        "Prismatic Vista", "Exotic Orchard", "Command Tower", "Path of Ancestry", "Bojuka Bog",
-        "Takenuma, Abandoned Mire", "Boseiju, Who Endures", "Eiganjo, Seat of the Empire", "Otawara, Soaring City",
-        "Sokenzan, Crucible of Defiance", "Reliquary Tower", "Rogue's Passage", "High Market", "Phyrexian Tower",
-        "Westvale Abbey", "Volrath's Stronghold", "Academy Ruins", "Hall of Heliod's Generosity", "Field of the Dead",
-        "Scavenger Grounds", "Geier Reach Sanitarium", "Mikokoro, Center of the Sea", "War Room", "Bonders' Enclave",
-        "Castle Locthwain", "Castle Garenbrig", "Castle Vantress", "Castle Ardenvale", "Castle Embereth",
-        "Witch's Cottage", "Gingerbread Cabin", "Idyllic Grange", "Dwarf Hold", "Hickory Woodlot",
-        "Peat Bog", "Remote Farm", "Sandstone Needle", "Saprazzan Skerry", "Ebon Stronghold",
-        "Havenwood Battleground", "Ruins of Trokair", "Svyelunite Temple", "Dwarven Ruins", "Vault of Champions",
-        "Spectator Seating", "Training Center", "Undergrowth Stadium", "Rejuvenating Springs", "Vault of Whispers",
-        "Tree of Tales", "Seat of the Synod", "Great Furnace", "Ancient Den", "Darksteel Citadel",
-            // PART 2 OF 4: CARDS 301 TO 600
-        "Mothman, Cryptid Leader", "The Master, Transcendent", "Piper Wright, Public Reporter", "Cait, Brawler Scholar",
-        "Pre War Hero", "Brotherhood Knight", "Paladin Danse", "Elder Maxson", "Super Mutant Scourge",
-        "Radstag Herd", "Glowing One", "Bloatfly Swarm", "Deathclaw Alpha", "Ya Guai Wanderer",
-        "Feral Ghoul Pack", "Vault 13 Survivor", "Pip-Boy 3000", "Bottle Cap Stash", "Stimpak Supply",
-        "Nuka-Cola Quantum", "Power Armor Suit", "Laser Rifle Prototype", "Fat Man Launcher", "Plasma Grenade",
-        "Shredder's Foot Soldiers", "Bebop, Mutant Rhino", "Rocksteady, War Boar", "Karai, Shadow Leader", "Baxter Stockman, Mad Scientist",
-        "Rat King, Sewer Lord", "Leatherhead, Swamp Gator", "Slash, Turtle Menace", "Metalhead, Robotic Ally", "Casey Jones, Vigilante",
-        "Mouser Swarm", "Technodrome Core", "Mutagen Ooze Vessel", "Dimension X Portal", "Sewer Grate Hideout",
-        "Pizza Party Feast", "Turtle Van", "Ninja Training Grounds", "Hamato Clan Dojo", "Foot Clan Stronghold",
-        "Frodo, Ring-Bearer", "Samwise Gamgee", "Pippin, Guard of the Citadel", "Merry, Esquire of Rohan", "Aragorn, King of Gondor",
-        "Legolas, Master Archer", "Gimli, Counter of Kills", "Boromir, Warden of the Tower", "Faramir, Field Commander", "Eowyn, Shieldmaiden of Rohan",
-        "Eomer, Marshal of the Riddermark", "Theoden, King of Rohan", "Treebeard, Gracious Host", "Quickbeam, Upbeat Ent", "Fangorn, Tree Shepherd", "Radagast the Brown", "Elrond, Lord of Rivendell", "Arwen, Undomiel", "Galadriel, Light of Valinor", "Celeborn, Lord of Lorien",
-        "Haldir, Lorien Lieutenant", "Cirdan the Shipwright", "Glorfindel, Rivendell Stalker", "Shadowfax, Lord of Horses", "Gwaihir, the Wind King",
-        "Bill the Pony", "Rosie Cotton of Bywater", "Farmer Maggot", "Butterbur, Bree Innkeeper", "Old Man Willow",
-        "Tom Bombadil", "Goldberry, River-Daughter", "Gollum, Scheming Suitor", "Sauron, the Dark Lord", "Sauron, Lord of the Rings",
-        "Witch-king of Angmar", "Nazgul Commander", "Saruman of Many Colors", "Saruman the White", "Grima Wormtongue",
-        "Gothmog, Morgul Lieutenant", "Mouth of Sauron", "Shelob, Child of Ungoliant", "Cave Troll of Moria", "Balrog, Flame of Udun",
-        "Watcher in the Water", "Ringwraith Stalker", "Orcish Bowmasters", "Uruk-hai Berserker", "Haradrim Spearman",
-        "Easterling Vanguard", "Corsairs of Umbar", "Dunlendings Raider", "Moria Marauder", "Gorgoroth Enforcer",
-        "Barad-dur Watchman", "Cirith Ungol Guard", "Minas Morgul Specter", "Osgiliath Veteran", "Pelennor Guard",
-        "Edoras Horseman", "Helm's Deep Defender", "Isengard Overseer", "Fangorn Protector", "Mirkwood Tracker",
-        "Lothlorien Archer", "Rivendell Scholar", "Shire Sheriff", "Bree Security", "Dead Marshes Specter",
-        "Paths of the Dead Ghost", "Dunharrow Trooper", "Grey Havens Sailor", "Iron Hills Dwarf", "Erebor Sentry",
-        "Dale Merchant", "Esgaroth Boatman", "Beorning Berserker", "Rohan Vanguard", "Gondor Shieldbearer",
-        "Ithilien Ranger", "Dol Amroth Knight", "Lossarnach Axeman", "Lamedon Clansman", "Anfalas Bowman",
-        "Pelargir Marine", "Lebennin Woodman", "Blackroot Vale Archer", "Pinnath Gelin Cavalry", "Ring-bearer Initiate",
-        "Fellowship Traveler", "Nine Companions Leader", "One Ring Bearer", "Shadow of the Past", "Flight to the Ford",
-        "Council of Elrond Member", "Moria Expedition Scout", "Lothlorien Pilgrim", "Amon Hen Watcher", "Rohan Emissary",
-        "Gondor Diplomat", "Mordor Infiltrator", "Haradrim Nomad", "Easterling Mercenary", "Corsair Captain",
-        "Dunlending Chieftain", "Orc Chieftain", "Uruk-hai Captain", "Troll Chieftain", "Nazgul Rider",
-        "Witch-king Lieutenant", "Black Rider", "Morgul Blade Wielder", "Barrow-wight Spectre", "Dead Man of Dunharrow",
-        "Ghost of the Marches", "Oathbreaker Captain", "Stone-troll Brawler", "Hill-troll Crusher", "Snow-troll Marauder",
-        "Cave-troll Smasher", "Mountain-troll Titan", "Ent of Fangorn", "Huorn Sentinel", "Awakened Tree Guardian",
-        "Woodland Elven Scout", "High Elven Noble", "Rivendell Knight", "Grey Havens Navigator", "Mirkwood Ranger",
-        "Lothlorien Guard", "Silvan Archer", "Sindarin Diplomat", "Erebor Guard", "Iron Hills Warrior",
-        "Dwarf-of-the-Blue-Mountains", "Broadbeam Miner", "Firebeard Smith", "Stiffbeard Mason", "Stonefoot Craftsman",
-        "Ironfist Sledge", "Blacklock Enforcer", "Hobbit Bounder", "Shire Farmer", "Buckland Fisherman",
-        "Tookland Militia", "Marish Planter", "Bywater Miller", "Frogmorton Bartender", "Michel Delving Mayor",
-        "Scary Quarryman", "Needlehole Tailor", "Whitfurrows Baker", "Stock Brewer", "Longbottom Leaf Grower",
-        "Bree Gatekeeper", "Prancing Pony Bouncer", "Archet Woodsman", "Combe Herbalist", "Staddle Potter",
-        "Chetwood Hunter", "Midgewater Swarm", "Weather Hills Ranger", "Lone-lands Nomad", "Trollshaws Guide",
-        "Ettenmoors Tracker", "Angmar Cultist", "Fornost Restless Spirit", "Carn Dum Zealot", "Rhudaur Bandit",
-        "Cardolan Guard", "Arthedain Knight", "Arnor Veteran", "Númenórean Noble", "Dúnedain Chieftain",
-        "Ranger of the North", "Wilderland Wanderer", "Beorning Skin-changer", "Mirkwood Spider Queen", "Dol Guldur Necromancer",
-        "Radagast's Companion", "Great Eagle Sentinel", "Warg Rider Captain", "Goblin-town Scavenger", "Moria Miner",
-        "Gundabad Warlord", "Iron Hills Smelter", "Lonely Mountain Guardian", "Esgaroth Town Guard", "Lake-town Master",
-        "Dale Swordmaster", "Thranduil's Guard", "Woodland Realm Bowman", "Iron Hills Crossbowman", "Raven of Erebor",
-        "Thrush of the Mountain", "Smaug's Shadow", "Fire-drake of the North", "Cold-drake Guardian", "Long-worm Serpent",
-        "Cave Spider Den", "Giant Spider Weaver", "Mirkwood Webspinner", "Ash Mountains Stalker", "Shadowy Specter",
-        "Gorgoroth Orc Slaver", "Lithlad Nomad", "Nurn Slave Master", "Khand Charioteer", "Haradrim Mumak Rider",
-        "Umbar Raider Chief", "Corsair Fleet Admiral", "Far Harad Warrior", "Near Harad Spearman", "Variag of Khand",
-        "Half-orc Mercenary", "Isengard Sapper", "Uruk-hai Crossbowman", "Dunland Axeman", "Rohan Horse-lord",
-        "Edoras Shieldmaiden", "Helm's Deep Crossbowman", "Harrowdale Shepherd", "Dunharrow Ghost Commander", "Paths of the Dead Spectre",
-        "Pelennor Knight", "Minas Tirith Defender", "Osgiliath Veteran Captain", "Cair Andros Guard", "Ithilien Tracker",
-        "Henneth Annun Ranger", "Lossarnach Axemaster", "Lebennin Mariner", "Blackroot Vale Marksman", "Lamedon Clansman Leader",
-        "Dol Amroth Swan Knight", "Pinnath Gelin Cavalry Captain", "Ethir Mariner", "Anfalas Herd Master", "Ring-bearer Guardian",
+        { name: "Myrkul, Lord of Bones", cmc: 7, colors: ["W","B","G"], type: "Legendary Creature", set: "CLB", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Slimefoot, the Stowaway", cmc: 3, colors: ["B","G"], type: "Legendary Creature", set: "DOM", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Frodo, Adventurous Hobbit", cmc: 2, colors: ["W","B","G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Sam, Loyal Attendant", cmc: 3, colors: ["W","B","G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Oroku Saki, Shredder Rising", cmc: 4, colors: ["B"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Splinter, Hamato Yoshi", cmc: 3, colors: ["G"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Michelangelo, Game Master", cmc: 3, colors: ["R"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "April O'Neil, Kunoichi Trainer", cmc: 2, colors: ["U"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Jennika, Bad Apple Big Sister", cmc: 3, colors: ["B"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Vraska, Soul of Stone", cmc: 5, colors: ["B","G"], type: "Planeswalker", set: "ONE", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Vraska, the Cutting Glare", cmc: 3, colors: ["B","G"], type: "Planeswalker", set: "MAT", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Pia, Determined Rebuilder", cmc: 2, colors: ["R"], type: "Legendary Creature", set: "MAT", arch: "Artifacts", qty: 1, isLegend: true },
+        { name: "Pia, Aether Ascetic", cmc: 3, colors: ["G"], type: "Legendary Creature", set: "KLD", arch: "Energy", qty: 1, isLegend: true },
+        { name: "Saheeli, Consul of Oversight", cmc: 4, colors: ["U","R"], type: "Legendary Creature", set: "KLD", arch: "Artifacts", qty: 1, isLegend: true },
+        { name: "Loot, the Nexus", cmc: 3, colors: ["G","U","R"], type: "Legendary Creature", set: "OTJ", arch: "Exile", qty: 1, isLegend: true },
+        { name: "Winter, Team Player", cmc: 4, colors: ["B","R"], type: "Legendary Creature", set: "DSK", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Tetsuko Umezawa, Pursuer", cmc: 2, colors: ["U"], type: "Legendary Creature", set: "DOM", arch: "Evasion", qty: 1, isLegend: true },
+        { name: "Arni, Renowned Champion", cmc: 3, colors: ["R"], type: "Legendary Creature", set: "KHM", arch: "Aggro", qty: 1, isLegend: true },
+        { name: "Teyo, Lightshield Expert", cmc: 3, colors: ["W"], type: "Legendary Creature", set: "WAR", arch: "Defense", qty: 1, isLegend: true },
+        { name: "Koth, the Geomancer", cmc: 4, colors: ["R"], type: "Planeswalker", set: "ONE", arch: "Burn", qty: 1, isLegend: true },
+        { name: "Thranduil, Sindarin Liege", cmc: 4, colors: ["G","U"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Bilbo Baggins, Burglar", cmc: 3, colors: ["U","R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Beorn, Reluctant Host", cmc: 6, colors: ["G"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Tom, Bert, and William", cmc: 5, colors: ["R","G"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Galion, Elvenking's Butler", cmc: 3, colors: ["G","U"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Bombur, Gentle Dreamer", cmc: 3, colors: ["R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gollum the Abandoned", cmc: 2, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Azog, Moria's Ruin", cmc: 5, colors: ["B","R"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Bolg of the North", cmc: 4, colors: ["B","R"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Dori, Bearer of Friends", cmc: 3, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gandalf, Spark Starter", cmc: 5, colors: ["U","R","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gollum, Silent Slinker", cmc: 2, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Lorcan, Warlock Collector", cmc: 7, colors: ["B"], type: "Legendary Creature", set: "AFR", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Taborax, Hope's Demise", cmc: 3, colors: ["B"], type: "Legendary Creature", set: "ZNR", arch: "Gothic", qty: 1, isLegend: true },
+        { name: "Dreadfeast Demon", cmc: 7, colors: ["B"], type: "Creature", set: "VOW", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Overseer of the Damned", cmc: 7, colors: ["B"], type: "Creature", set: "C14", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Pestilence Demon", cmc: 8, colors: ["B"], type: "Creature", set: "ROE", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Demon of Catastrophes", cmc: 4, colors: ["B"], type: "Creature", set: "M19", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Desecration Demon", cmc: 4, colors: ["B"], type: "Creature", set: "RTR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Demon of Loathing", cmc: 7, colors: ["B"], type: "Creature", set: "ANB", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Mindwrack Demon", cmc: 4, colors: ["B"], type: "Creature", set: "SOI", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Rakshasa Debaser", cmc: 6, colors: ["B"], type: "Creature", set: "CMR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Crabomination", cmc: 6, colors: ["B"], type: "Creature", set: "MH3", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Eater of Hope", cmc: 7, colors: ["B"], type: "Creature", set: "BNG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Thraxodemon", cmc: 2, colors: ["B"], type: "Creature", set: "ONE", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Desolation Twin", cmc: 10, colors: [], type: "Creature", set: "BFZ", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Writhing Chrysalis", cmc: 4, colors: ["G","R"], type: "Creature", set: "MH3", arch: "Gothic", qty: 2, isLegend: false },
+        { name: "Catacomb Sifter", cmc: 3, colors: ["B","G"], type: "Creature", set: "BFZ", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Bane of Bala Ged", cmc: 7, colors: [], type: "Creature", set: "BFZ", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Silver Surfer, Galactus's Herald", cmc: 3, colors: ["W"], type: "Creature", set: "MAR", arch: "Evasion", qty: 1, isLegend: false },
+        { name: "Genesis Hydra", cmc: 2, colors: ["G"], type: "Creature", set: "M15", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Forgotten Ancient", cmc: 4, colors: ["G"], type: "Creature", set: "SCG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Sunblast Angel", cmc: 6, colors: ["W"], type: "Creature", set: "SOM", arch: "Removal", qty: 1, isLegend: false },
+        { name: "The Vision", cmc: 4, colors: ["W","U"], type: "Creature", set: "MAR", arch: "Evasion", qty: 1, isLegend: false },
+        { name: "Brotherhood's End", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "BRO", arch: "Removal", qty: 1, isLegend: false },
+        { name: "The Endstone", cmc: 3, colors: [], type: "Artifact", set: "MIN", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Arcane Signet", cmc: 2, colors: [], type: "Artifact", set: "ELD", arch: "Ramp", qty: 3, isLegend: false },
+        { name: "Chromatic Lantern", cmc: 3, colors: [], type: "Artifact", set: "RTR", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Talisman of Impulse", cmc: 2, colors: [], type: "Artifact", set: "MRD", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Hedron Archive", cmc: 4, colors: [], type: "Artifact", set: "BFZ", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Mind Stone", cmc: 2, colors: [], type: "Artifact", set: "WTH", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Reckoner Bankbuster", cmc: 2, colors: [], type: "Artifact", set: "NEO", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Mirage Mirror", cmc: 3, colors: [], type: "Artifact", set: "HOU", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Sting, Bilbo's Sword", cmc: 2, colors: [], type: "Artifact", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Meticulous Commons", cmc: 0, colors: ["W","U"], type: "Land", set: "MKM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Slingerquill Annex", cmc: 0, colors: ["R"], type: "Land", set: "OTJ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Vigorbloom Annex", cmc: 0, colors: ["G"], type: "Land", set: "OTJ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Goblin-town", cmc: 0, colors: ["R"], type: "Land", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Swamp", cmc: 0, colors: ["B"], type: "Land", set: "BASIC", arch: "Lands", qty: 25, isLegend: false },
+        { name: "Forest", cmc: 0, colors: ["G"], type: "Land", set: "BASIC", arch: "Lands", qty: 25, isLegend: false },
+        { name: "Plains", cmc: 0, colors: ["W"], type: "Land", set: "BASIC", arch: "Lands", qty: 25, isLegend: false },
+        { name: "Mountain", cmc: 0, colors: ["R"], type: "Land", set: "BASIC", arch: "Lands", qty: 25, isLegend: false },
+        { name: "Island", cmc: 0, colors:["U"], type: "Land", set: "BASIC", arch:"Lands", qty: 25, isLegend: false }
+                /
+        { name: "Mothman, Cryptid Leader", cmc: 4, colors: ["B","G","U"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "The Master, Transcendent", cmc: 4, colors: ["B","G","U"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "Piper Wright, Public Reporter", cmc: 2, colors: ["U"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "Cait, Brawler Scholar", cmc: 3, colors: ["R"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "Pre War Hero", cmc: 3, colors: ["W"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Brotherhood Knight", cmc: 4, colors: ["W"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Paladin Danse", cmc: 4, colors: ["W"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "Elder Maxson", cmc: 3, colors: ["W","R"], type: "Legendary Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: true },
+        { name: "Super Mutant Scourge", cmc: 5, colors: ["G","R"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Radstag Herd", cmc: 4, colors: ["G"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Glowing One", cmc: 3, colors: ["G"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Bloatfly Swarm", cmc: 3, colors: ["B"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Deathclaw Alpha", cmc: 7, colors: ["G"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Ya Guai Wanderer", cmc: 4, colors: ["G"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Feral Ghoul Pack", cmc: 3, colors: ["B"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Vault 13 Survivor", cmc: 2, colors: ["W"], type: "Creature", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Pip-Boy 3000", cmc: 1, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Bottle Cap Stash", cmc: 2, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Stimpak Supply", cmc: 1, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Nuka-Cola Quantum", cmc: 2, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Power Armor Suit", cmc: 4, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Laser Rifle Prototype", cmc: 3, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Fat Man Launcher", cmc: 5, colors: [], type: "Artifact", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Plasma Grenade", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "PIP", arch: "Fallout", qty: 1, isLegend: false },
+        { name: "Shredder's Foot Soldiers", cmc: 2, colors: ["B"], type: "Creature", set: "TMN", arch: "TMNT", qty: 2, isLegend: false },
+        { name: "Bebop, Mutant Rhino", cmc: 4, colors: ["B","R"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Rocksteady, War Boar", cmc: 4, colors: ["G","R"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Karai, Shadow Leader", cmc: 3, colors: ["B","U"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Baxter Stockman, Mad Scientist", cmc: 3, colors: ["U","B"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Rat King, Sewer Lord", cmc: 4, colors: ["B"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Leatherhead, Swamp Gator", cmc: 5, colors: ["B","G"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Slash, Turtle Menace", cmc: 4, colors: ["G","R"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Metalhead, Robotic Ally", cmc: 3, colors: [], type: "Artifact", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Casey Jones, Vigilante", cmc: 3, colors: ["W","R"], type: "Legendary Creature", set: "TMN", arch: "TMNT", qty: 1, isLegend: true },
+        { name: "Mouser Swarm", cmc: 2, colors: [], type: "Artifact Creature", set: "TMN", arch: "TMNT", qty: 2, isLegend: false },
+        { name: "Technodrome Core", cmc: 5, colors: [], type: "Artifact", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Mutagen Ooze Vessel", cmc: 2, colors: [], type: "Artifact", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Dimension X Portal", cmc: 4, colors: [], type: "Artifact", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Sewer Grate Hideout", cmc: 0, colors: [], type: "Land", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Pizza Party Feast", cmc: 3, colors: ["G"], type: "Instant/Sorcery", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Turtle Van", cmc: 3, colors: [], type: "Artifact", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Ninja Training Grounds", cmc: 0, colors: [], type: "Land", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Hamato Clan Dojo", cmc: 0, colors: [], type: "Land", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Foot Clan Stronghold", cmc: 0, colors: [], type: "Land", set: "TMN", arch: "TMNT", qty: 1, isLegend: false },
+        { name: "Frodo, Ring-Bearer", cmc: 1, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Samwise Gamgee", cmc: 2, colors: ["G","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Pippin, Guard of the Citadel", cmc: 2, colors: ["W","U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Merry, Esquire of Rohan", cmc: 2, colors: ["R","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Aragorn, King of Gondor", cmc: 4, colors: ["U","R","W"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Legolas, Master Archer", cmc: 3, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gimli, Counter of Kills", cmc: 4, colors: ["R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Boromir, Warden of the Tower", cmc: 3, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Faramir, Field Commander", cmc: 4, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Eowyn, Shieldmaiden of Rohan", cmc: 5, colors: ["U","R","W"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Eomer, Marshal of the Riddermark", cmc: 4, colors: ["R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Theoden, King of Rohan", cmc: 3, colors: ["R","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Treebeard, Gracious Host", cmc: 4, colors: ["G","W"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Quickbeam, Upbeat Ent", cmc: 5, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Fangorn, Tree Shepherd", cmc: 7, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Radagast the Brown", cmc: 4, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Elrond, Lord of Rivendell", cmc: 3, colors: ["U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Arwen, Undomiel", cmc: 2, colors: ["G","U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Galadriel, Light of Valinor", cmc: 5, colors: ["G","W","U"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Celeborn, Lord of Lorien", cmc: 4, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Haldir, Lorien Lieutenant", cmc: 4, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Cirdan the Shipwright", cmc: 5, colors: ["G","U"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Glorfindel, Rivendell Stalker", cmc: 3, colors: ["G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Shadowfax, Lord of Horses", cmc: 5, colors: ["R","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gwaihir, the Wind King", cmc: 6, colors: ["W","U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Bill the Pony", cmc: 1, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Rosie Cotton of Bywater", cmc: 3, colors: ["W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Farmer Maggot", cmc: 3, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Butterbur, Bree Innkeeper", cmc: 4, colors: ["G","W"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Old Man Willow", cmc: 4, colors: ["B","G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Tom Bombadil", cmc: 5, colors: ["W","U","B","R","G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Goldberry, River-Daughter", cmc: 2, colors: ["U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gollum, Scheming Suitor", cmc: 2, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Sauron, the Dark Lord", cmc: 6, colors: ["U","B","R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Sauron, Lord of the Rings", cmc: 8, colors: ["U","B","R"], type: "Legendary Creature", set: "LTC", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Witch-king of Angmar", cmc: 5, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Nazgul Commander", cmc: 3, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 9, isLegend: false },
+        { name: "Saruman of Many Colors", cmc: 6, colors: ["W","U","B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Saruman the White", cmc: 5, colors: ["U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Grima Wormtongue", cmc: 3, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Gothmog, Morgul Lieutenant", cmc: 4, colors: ["B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Mouth of Sauron", cmc: 5, colors: ["U","B"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Shelob, Child of Ungoliant", cmc: 6, colors: ["B","G"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Cave Troll of Moria", cmc: 7, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Balrog, Flame of Udun", cmc: 5, colors: ["B","R"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Watcher in the Water", cmc: 5, colors: ["U"], type: "Legendary Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: true },
+        { name: "Ringwraith Stalker", cmc: 6, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Orcish Bowmasters", cmc: 2, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Uruk-hai Berserker", cmc: 3, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Haradrim Spearman", cmc: 3, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Easterling Vanguard", cmc: 2, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Corsairs of Umbar", cmc: 4, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Dunlendings Raider", cmc: 3, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Moria Marauder", cmc: 2, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Gorgoroth Enforcer", cmc: 5, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Barad-dur Watchman", cmc: 3, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Cirith Ungol Guard", cmc: 4, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Minas Morgul Specter", cmc: 4, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Osgiliath Veteran", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Pelennor Guard", cmc: 2, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Edoras Horseman", cmc: 3, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Helm's Deep Defender", cmc: 4, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Isengard Overseer", cmc: 3, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Fangorn Protector", cmc: 6, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Mirkwood Tracker", cmc: 1, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Lothlorien Archer", cmc: 3, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Rivendell Scholar", cmc: 3, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Shire Sheriff", cmc: 2, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Bree Security", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Dead Marshes Specter", cmc: 4, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Paths of the Dead Ghost", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Dunharrow Trooper", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Grey Havens Sailor", cmc: 3, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Iron Hills Dwarf", cmc: 2, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Erebor Sentry", cmc: 4, colors: ["R"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Dale Merchant", cmc: 3, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Esgaroth Boatman", cmc: 2, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Beorning Berserker", cmc: 4, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Rohan Vanguard", cmc: 3, colors: ["R","W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Gondor Shieldbearer", cmc: 2, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 2, isLegend: false },
+        { name: "Ithilien Ranger", cmc: 3, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Dol Amroth Knight", cmc: 4, colors: ["U","W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Lossarnach Axeman", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Lamedon Clansman", cmc: 3, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Anfalas Bowman", cmc: 2, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Pelargir Marine", cmc: 3, colors: ["U"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Lebennin Woodman", cmc: 2, colors: ["G"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Blackroot Vale Archer", cmc: 2, colors: ["B"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Pinnath Gelin Cavalry", cmc: 5, colors: ["G","W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
+        { name: "Ring-bearer Initiate", cmc: 1, colors: ["W"], type: "Creature", set: "LTR", arch: "LOTR", qty: 1, isLegend: false },
                 // PART 3 OF 4: CARDS 601 TO 900
-        "Shadowed Fate", "Arcane Infusion", "Temporal Tether", "Vortex of Doom", "Aether Surge",
-        "Mystic Reflection", "Spectral Binding", "Essence Drain", "Phantom Strike", "Chrono Break",
-        "Rift Warp", "Nullify Spells", "Void Gazer", "Astral Beacon", "Starlight Blessing",
-        "Ethereal Chains", "Warp Pulse", "Dimensional Tear", "Cosmic Radiance", "Abyssal Echo",
-        "Nether Rejection", "Soul Cleave", "Doom Siphon", "Oblivion Field", "Grasp of Darkness",
-        "Shadow Pulse", "Death's Embrace", "Fatal Rupture", "Grave Purge", "Corrupting Touch",
-        "Terror of the Void", "Dark Salvation", "Dread Reaping", "Sinister Pact", "Vampiric Touch",
-        "Blood Sacrifice", "Infernal Bargain", "Soul Extraction", "Fiendish Rebuke", "Hellfire Spark",
-        "Pyroclastic Blast", "Flame Wreathed", "Searing Embers", "Magma Eruption", "Volcanic Tempest",
-        "Blazing Onslaught", "Inferno Bolt", "Thermal Shock", "Molten Surge", "Ignite Soul", "Furious Strike",
-        "Wildfire Rampage", "Chaos Burst", "Cinder Storm", "Ember Spray", "Wild Growth Surge",
-        "Verdant Infusion", "Nature's Reclamation", "Sylvan Awakening", "Rootbound Barrier", "Primal Roar",
-        "Floral Blessing", "Barkskin Shield", "Terran Charge", "Overgrowth Spark", "Timber Crash",
-        "Earthy Touch", "Natural Synergy", "Vine Whip", "Spore Cloud", "Bountiful Harvest",
-        "Sunlit Shield", "Divine Benediction", "Holy Aura", "Radiant Cleansing", "Celestial Aegis",
-        "Angelic Protection", "Righteous Fury", "Purifying Flame", "Dawn's Light", "Sacred Vow",
-        "Aura of Hope", "Luminous Ward", "Graceful Blessing", "Solemn Prayer", "Beacon of Light",
-        "Arcane Signet Prototype", "Sol Catalyst", "Chromatic Dynamo", "Mana Generator", "Power Matrix Core",
-        "Aether Lens", "Prismatic Orb", "Crystal Capacitor", "Energy Cell", "Overcharged Engine",
-        "Mana Battery", "Flux Conduit", "Relic Transformer", "Temporal Dial", "Void Mirror",
-        "Soul Crucible", "Eldritch Obelisk", "Dimensional Anchor", "Darksteel Relic Core", "Celestial Orrery",
-        "Rune-Forged Blade", "Shadow Dagger", "Ethereal Armor Set", "Aegis of the Fallen", "Helm of Command",
-        "Boots of Swiftness", "Cloak of Invisibility", "Gauntlets of Might", "Ring of Evocation", "Amulet of Vitality",
-        "Crown of Kings", "Staff of Elements", "Shield of Valor", "Warhammer of Titan", "Bow of the Hunter",
-        "Gilded Chalice", "Tome of Ancients", "Mirror of Truth", "Orb of Sight", "Lantern of Souls",
-        "Scepter of Power", "Horn of Plenty", "Altar of Devotion", "Pedestal of Glory", "Vault of Secrets",
-        "Scroll of Wisdom", "Compass of the Lost", "Hourglass of Time", "Chime of Harmony", "Censer of Peace",
-        "Darksteel Forge Node", "Mind Stone Matrix", "Hedron Network Fragment", "Thought Vessel Core", "Reliquary Tower Key",
-        "Sol Ring Replica", "Thran Dynamo Catalyst", "Gilded Lotus Blossom", "Lotus Petal Shard", "Black Lotus Fragment",
-        "Mana Vault Lock", "Grim Monolith Pillar", "Basalt Monolith Fragment", "Mox Diamond Prism", "Mox Opal Shard",
-        "Mox Amber Gem", "Chrome Mox Plating", "Mox Tantalite Catalyst", "Jeweled Lotus Petal", "Mana Crypt Key",
-        "Lightning Greaves Set", "Swiftfoot Boots Pair", "Champion's Helm Core", "Skullclamp Fixture", "Ashnod's Altar Base",
-        "Phyrexian Altar Frame", "Nim Deathmantle Weave", "Aetherflux Reservoir Core", "Bolas's Citadel Gate", "Sensei's Divining Top Node",
-        "Smothering Tithe Ledger", "Esper Sentinel Shield", "Rhystic Study Tome", "Mystic Remora Shell", "Sylvan Library Scroll",
-        "Necropotence Skull", "Phyrexian Arena Floor", "Black Market Connections Node", "Kindred Discovery Rune", "Guardian Project Grove",
-        "Beast Whisperer Companion", "Lifecrafter's Bestiary Page", "Great Henge Root", "Trouble in Pairs Seal", "Monologue Tax Ledger",
-        "Loran's Third Path Relic", "Skyclave Apparition Spirit", "Solitude Essence", "Grief Whispers", "Subtlety Shard",
-        "Endurance Roots", "Fury Flames", "Force of Will Scroll", "Force of Negation Shield", "Mana Drain Catalyst",
-        "Counterspell Wand", "Fierce Guardianship Ward", "Deflecting Swat Spark", "Deadly Rollick Dagger", "Flawless Maneuver Crest",
-        "Heroic Intervention Charm", "Teferi's Protection Veil", "Cyclonic Rift Vortex", "Toxic Deluge Vial", "Damnation Orb",
-        "Wrath of God Tablet", "Blasphemous Act Rune", "Vanquish the Horde Blade", "Farewell Light", "Supreme Verdict Gavel",
-        "Languish Smoke", "Crux of Fate Dragon Scale", "Extinction Event Marker", "Shadows' Verdict Mask", "Crippling Fear Shackles",
-        "Meathook Massacre Wire", "Bastion of Remembrance Flag", "Dreadhorde Invasion Banner", "Bitterblossom Petal", "Skrelv's Hive Node",
-        "Ghoulcaller's Tome", "Poppet Stitcher Needle", "Ophiomancer Idol", "Grave Titan Chain", "Wurmcoil Core",
-        "Noxious Gearhulk Visage", "Verdurous Gearhulk Moss", "Combustible Gearhulk Ash", "Torrential Gearhulk Wave", "Cataclysmic Gearhulk Crest",
-        "Sword of Feast and Famine", "Sword of Fire and Ice", "Sword of Light and Shadow", "Sword of Body and Mind", "Sword of War and Peace",
-        "Sword of Truth and Justice", "Sword of Sinew and Steel", "Sword of Hearth and Home", "Sword of Forge and Frontier", "Sword of Once and Future",
-        "Shadowspear Point", "Umezawa's Jitte Edge", "Batter-skull Assembly", "Kaldra Compleat Relic", "Hammer of Nazahn", "Colossus Hammer Heavy",
-        "Bloodforged Battle-Axe", "Blackblade Reforged", "Mace of the Valiant", "Sword of the Animist", "Heirloom Blade",
-        "Hero's Blade", "Infiltration Lens", "Mask of Memory", "Skullclamp Wire", "Loxodon Warhammer",
-        "Quietus Spike", "Scythe of the Wretched", "Argentum Armor", "Fireshrieker", "Grafted Exoskeleton",
-        "Whispersilk Cloak", "Swiftfoot Boots", "Lightning Greaves", "Prowler's Helm", "Rogue's Gloves",
-        "Trailblazer's Boots", "Zephyr Boots", "Fleetfeather Sandals", "Winged Boots", "Strider Harness",
-        "Darksteel Plate", "Shield of Kaldra", "Sword of Kaldra", "Helm of Kaldra", "Ring of Kalonia",
-        "Ring of Evos Isle", "Ring of Xathrid", "Ring of Valkas", "Ring of Thune", "Mirran Spyglass",
-        "Spyglass of the Seekers", "Glasses of Urza", "Urza's Bauble", "Mishra's Bauble", "Conjurer's Bauble",
-        "Wayfarer's Bauble", "Soul-Guide Lantern", "Relic of Progenitus", "Tormod's Crypt", "Nihil Spellbomb",
-        "Scrabbling Claws", "Phyrexian Spellbomb", "Sunbeam Spellbomb", "Lifespark Spellbomb", "Aether Spellbomb",
-        "Flight Spellbomb", "Necrogen Spellbomb", "Pyrite Spellbomb", "Origin Spellbomb", "Panic Spellbomb",
-                // PART 4 OF 4: CARDS 901 TO 1,157 & CLOSING ARRAY
-        "Bojuka Bog", "Takenuma, Abandoned Mire", "Boseiju, Who Endures", "Eiganjo, Seat of the Empire", "Otawara, Soaring City",
-        "Sokenzan, Crucible of Defiance", "Reliquary Tower", "Rogue's Passage", "High Market", "Phyrexian Tower",
-        "Westvale Abbey", "Volrath's Stronghold", "Academy Ruins", "Hall of Heliod's Generosity", "Field of the Dead",
-        "Scavenger Grounds", "Geier Reach Sanitarium", "Mikokoro, Center of the Sea", "War Room", "Bonders' Enclave",
-        "Castle Locthwain", "Castle Garenbrig", "Castle Vantress", "Castle Ardenvale", "Castle Embereth",
-        "Witch's Cottage", "Gingerbread Cabin", "Idyllic Grange", "Dwarf Hold", "Hickory Woodlot",
-        "Peat Bog", "Remote Farm", "Sandstone Needle", "Saprazzan Skerry", "Ebon Stronghold",
-        "Havenwood Battleground", "Ruins of Trokair", "Svyelunite Temple", "Dwarven Ruins", "Vault of Champions",
-        "Spectator Seating", "Training Center", "Undergrowth Stadium", "Rejuvenating Springs", "Vault of Whispers",
-        "Tree of Tales", "Seat of the Synod", "Great Furnace", "Ancient Den", "Darksteel Citadel",
-        "Arcane Lighthouse", "Detection Tower", "Homeward Path", "Command Beacon", "Spire of Industry",
-        "Aether Hub", "Exotic Orchard", "Path of Ancestry", "Reflecting Pool", "City of Brass",
-        "Mana Confluence", "Forbidden Orchard", "Tarnished Citadel", "Gemstone Mine", "Crystal Quarry",
-        "Cascading Cataracts", "Shimmering Grotto", "Unknown Shores", "Holdout Settlement", "Survivors' Encampment",
-        "Cryptic Caves", "Arch of Orazca", "Estate Gate", "Cliffgate", "Black Dragon Gate",
-        "Citadel Gate", "Sea Gate", "Gond Gate", "Heap Gate", "Manor Gate",
-        "Baldur's Gate", "Thran Portal", "Demolition Field", "Field of Ruin", "Ghost Quarter",
-        "Tectonic Edge", "Encroaching Wastes", "Wasteland", "Strip Mine", "Dust Bowl", "Deserted Temple",
-        "Nykthos, Shrine to Nyx", "Cabal Coffers", "Cabal Stronghold", "Urborg, Tomb of Yawgmoth", "Yavimaya, Cradle of Growth",
-        "Crypt of Agadeem", "Lake of the Dead", "Phyrexian Devourer Land", "Volcano Hellion Ridge", "Glacial Chasm",
-        "Maze of Ith", "Kor Haven", "Prahv, Spires of Order", "Sunhome, Fortress of the Legion", "Skarrg, the Rage Pits",
-        "Vitu-Ghazi, the City-Tree", "Svogthos, the Restless Tomb", "Duskmantle, House of Shadow", "Nivix, Aerie of the Firemind", "Orzhova, the Church of Deals",
-        "Rath's Edge", "Kor Haven Garrison", "Kessig Wolf Run", "Gavony Township", "Moorland Haunt",
-        "Nephalia Drownyard", "Vault of the Archangel", "Alchemist's Refuge", "Slayer's Stronghold", "Desolate Lighthouse",
-        "Grim Backwoods", "Rogue's Hideout", "Spawning Bed", "Foundry of the Consuls", "Gargoyle Castle",
-        "Mage-Ring Network", "Dread Statuary", "Stirring Wildwood", "Raging Ravine", "Lumbering Falls",
-        "Celestial Colonnade", "Creeping Tar Pit", "Hissing Quagmire", "Needleverge Pathway", "Hengegate Pathway",
-        "Branchloft Pathway", "Brightclimb Pathway", "Clearwater Pathway", "Cragcrown Pathway", "Darkbore Pathway",
-        "Riverglide Pathway", "Barkchannel Pathway", "Blightstep Pathway", "Kaldheim Snow Swamp", "Kaldheim Snow Forest",
-        "Kaldheim Snow Plains", "Kaldheim Snow Mountain", "Kaldheim Snow Island", "Ash Barrens", "Evolving Wilds Core",
-        "Terramorphic Expanse Core", "Myriad Landscape", "Bighted Woodland", "Blighted Fen", "Blighted Cataract",
-        "Blighted Gorge", "Blighted Steppe", "Haunted Mire", "Idyllic Beachfront", "Radiant Grove",
-        "Sunlit Marsh", "Tangling Islet", "Wooded Ridgeline", "Contaminated Aquifer", "Geothermal Bog",
-        "Molten Tributary", "Sacred Peaks", "Overgrown Farmland", "Deserted Beach", "Haunted Ridge",
-        "Rockfall Vale", "Shipwreck Marsh", "Dreamroot Cascade", "Shattered Sanctum", "Stormcarved Coast",
-        "Sundown Pass", "Deathcap Glade", "Restless Bivouac", "Restless Fortress", "Restless Cottage",
-        "Restless Spire", "Restless Reef", "Restless Vents", "Restless Anchorage", "Restless Prairie",
-        "Restless Ridge", "Restless Marsh", "Llanowar Reaches", "Sylvan Basin", "Gloom Mire",
-        "Sunstone Quarry", "Frost peak Summit", "Windswept Crag", "Volcanic Ridge", "Ethereal Valley",
-        "Obsidian Crater", "Chrono Spring", "Void Abyss", "Titan's Graveyard", "Crystal Cavern",
-        "Swamp", "Forest", "Plains", "Mountain", "Island"
+        { name: "Shadowed Fate", cmc: 2, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Arcane Infusion", cmc: 2, colors: ["U","R"], type: "Instant/Sorcery", set: "MID", arch: "Spells", qty: 1, isLegend: false },
+        { name: "Temporal Tether", cmc: 3, colors: ["U"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Vortex of Doom", cmc: 6, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Aether Surge", cmc: 4, colors: ["U"], type: "Instant/Sorcery", set: "MTG", arch: "Spells", qty: 1, isLegend: false },
+        { name: "Mystic Reflection", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "KHM", arch: "Control", qty: 1, isLegend: false },
+        { name: "Spectral Binding", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Essence Drain", cmc: 5, colors: ["B"], type: "Instant/Sorcery", set: "M13", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Phantom Strike", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Chrono Break", cmc: 4, colors: ["U"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Rift Warp", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Nullify Spells", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Void Gazer", cmc: 3, colors: ["B"], type: "Creature", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Astral Beacon", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Starlight Blessing", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Ethereal Chains", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Warp Pulse", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Dimensional Tear", cmc: 4, colors: ["B","R"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Cosmic Radiance", cmc: 5, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Abyssal Echo", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Nether Rejection", cmc: 2, colors: ["U","B"], type: "Instant/Sorcery", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Soul Cleave", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "DMU", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Doom Siphon", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Oblivion Field", cmc: 5, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Grasp of Darkness", cmc: 2, colors: ["B"], type: "Instant/Sorcery", set: "OGW", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Shadow Pulse", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Death's Embrace", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Fatal Rupture", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Grave Purge", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "DKA", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Corrupting Touch", cmc: 1, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Terror of the Void", cmc: 6, colors: ["B"], type: "Creature", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Dark Salvation", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "EMN", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Dread Reaping", cmc: 5, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Sinister Pact", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Vampiric Touch", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "POR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Blood Sacrifice", cmc: 2, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Infernal Bargain", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Soul Extraction", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Fiendish Rebuke", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "AFR", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Hellfire Spark", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Pyroclastic Blast", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Flame Wreathed", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Searing Embers", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Magma Eruption", cmc: 4, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Volcanic Tempest", cmc: 5, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Blazing Onslaught", cmc: 4, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Aggro", qty: 1, isLegend: false },
+        { name: "Inferno Bolt", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Thermal Shock", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Molten Surge", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Ignite Soul", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Furious Strike", cmc: 1, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Wildfire Rampage", cmc: 5, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Chaos Burst", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Chaos", qty: 1, isLegend: false },
+        { name: "Cinder Storm", cmc: 4, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Ember Spray", cmc: 2, colors: ["R"], type: "Instant/Sorcery", set: "MTG", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Wild Growth Surge", cmc: 3, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Verdant Infusion", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Nature's Reclamation", cmc: 3, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Sylvan Awakening", cmc: 3, colors: ["G"], type: "Instant/Sorcery", set: "DOM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Rootbound Barrier", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Primal Roar", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Floral Blessing", cmc: 1, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Barkskin Shield", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Terran Charge", cmc: 4, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Aggro", qty: 1, isLegend: false },
+        { name: "Overgrowth Spark", cmc: 1, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Timber Crash", cmc: 5, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Earthy Touch", cmc: 1, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Natural Synergy", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Vine Whip", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Spore Cloud", cmc: 3, colors: ["G"], type: "Instant/Sorcery", set: "FEM", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Bountiful Harvest", cmc: 5, colors: ["G"], type: "Instant/Sorcery", set: "M13", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Sunlit Shield", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Divine Benediction", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Holy Aura", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Radiant Cleansing", cmc: 4, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Celestial Aegis", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Angelic Protection", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Righteous Fury", cmc: 6, colors: ["W"], type: "Instant/Sorcery", set: "S99", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Purifying Flame", cmc: 3, colors: ["W","R"], type: "Instant/Sorcery", set: "MTG", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Dawn's Light", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Sacred Vow", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Aura of Hope", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Luminous Ward", cmc: 1, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Graceful Blessing", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Solemn Prayer", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Beacon of Light", cmc: 2, colors: ["W"], type: "Instant/Sorcery", set: "MTG", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Arcane Signet Prototype", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Sol Catalyst", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Chromatic Dynamo", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mana Generator", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Power Matrix Core", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Aether Lens", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Prismatic Orb", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Crystal Capacitor", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Energy Cell", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Overcharged Engine", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mana Battery", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Flux Conduit", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Relic Transformer", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Temporal Dial", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Void Mirror", cmc: 2, colors: [], type: "Artifact", set: "MH2", arch: "Control", qty: 1, isLegend: false },
+        { name: "Soul Crucible", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Eldritch Obelisk", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Dimensional Anchor", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Darksteel Relic Core", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Celestial Orrery", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Rune-Forged Blade", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Shadow Dagger", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Ethereal Armor Set", cmc: 1, colors: ["W"], type: "Enchantment", set: "RTR", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Aegis of the Fallen", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Helm of Command", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Boots of Swiftness", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Cloak of Invisibility", cmc: 1, colors: ["U"], type: "Enchantment", set: "MIR", arch: "Evasion", qty: 1, isLegend: false },
+        { name: "Gauntlets of Might", cmc: 4, colors: [], type: "Artifact", set: "LEA", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Ring of Evocation", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Amulet of Vitality", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Crown of Kings", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Staff of Elements", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Shield of Valor", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Warhammer of Titan", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Bow of the Hunter", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Gilded Chalice", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Tome of Ancients", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Mirror of Truth", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Orb of Sight", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Lantern of Souls", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Scepter of Power", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Horn of Plenty", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Altar of Devotion", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Pedestal of Glory", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Vault of Secrets", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Scroll of Wisdom", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Compass of the Lost", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Hourglass of Time", cmc: 3, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Chime of Harmony", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Censer of Peace", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Darksteel Forge Node", cmc: 9, colors: [], type: "Artifact", set: "DST", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Mind Stone Matrix", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Hedron Network Fragment", cmc: 4, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Thought Vessel Core", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Reliquary Tower Key", cmc: 0, colors: [], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sol Ring Replica", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Thran Dynamo Catalyst", cmc: 4, colors: [], type: "Artifact", set: "UDS", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Gilded Lotus Blossom", cmc: 5, colors: [], type: "Artifact", set: "MRD", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Lotus Petal Shard", cmc: 0, colors: [], type: "Artifact", set: "TMP", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Black Lotus Fragment", cmc: 0, colors: [], type: "Artifact", set: "LEA", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mana Vault Lock", cmc: 1, colors: [], type: "Artifact", set: "LEA", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Grim Monolith Pillar", cmc: 2, colors: [], type: "Artifact", set: "ULG", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Basalt Monolith Fragment", cmc: 3, colors: [], type: "Artifact", set: "LEA", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mox Diamond Prism", cmc: 0, colors: [], type: "Artifact", set: "STH", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mox Opal Shard", cmc: 0, colors: [], type: "Artifact", set: "SOM", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mox Amber Gem", cmc: 0, colors: [], type: "Artifact", set: "DOM", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Chrome Mox Plating", cmc: 0, colors: [], type: "Artifact", set: "MRD", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mox Tantalite Catalyst", cmc: 0, colors: [], type: "Artifact", set: "MH1", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Jeweled Lotus Petal", cmc: 0, colors: [], type: "Artifact", set: "CMR", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Mana Crypt Key", cmc: 0, colors: [], type: "Artifact", set: "PRM", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Lightning Greaves Set", cmc: 2, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Swiftfoot Boots Pair", cmc: 2, colors: [], type: "Artifact", set: "M12", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Champion's Helm Core", cmc: 3, colors: [], type: "Artifact", set: "CMD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Skullclamp Fixture", cmc: 1, colors: [], type: "Artifact", set: "DST", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Ashnod's Altar Base", cmc: 3, colors: [], type: "Artifact", set: "ATQ", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Phyrexian Altar Frame", cmc: 3, colors: [], type: "Artifact", set: "INV", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Nim Deathmantle Weave", cmc: 2, colors: [], type: "Artifact", set: "SOM", arch: "Reanimation", qty: 1, isLegend: false },
+        { name: "Aetherflux Reservoir Core", cmc: 4, colors: [], type: "Artifact", set: "KLD", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Bolas's Citadel Gate", cmc: 6, colors: ["B"], type: "Artifact", set: "WAR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Sensei's Divining Top Node", cmc: 1, colors: [], type: "Artifact", set: "CHK", arch: "Control", qty: 1, isLegend: false },
+        { name: "Smothering Tithe Ledger", cmc: 4, colors: ["W"], type: "Enchantment", set: "RNA", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Esper Sentinel Shield", cmc: 1, colors: ["W"], type: "Creature", set: "MH2", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Rhystic Study Tome", cmc: 3, colors: ["U"], type: "Enchantment", set: "PCY", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Mystic Remora Shell", cmc: 1, colors: ["U"], type: "Enchantment", set: "ICE", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Sylvan Library Scroll", cmc: 2, colors: ["G"], type: "Enchantment", set: "LEG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Necropotence Skull", cmc: 3, colors: ["B"], type: "Enchantment", set: "ICE", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Phyrexian Arena Floor", cmc: 3, colors: ["B"], type: "Enchantment", set: "APC", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Black Market Connections Node", cmc: 3, colors: ["B"], type: "Enchantment", set: "CLB", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Kindred Discovery Rune", cmc: 5, colors: ["U"], type: "Enchantment", set: "C17", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Guardian Project Grove", cmc: 4, colors: ["G"], type: "Enchantment", set: "RNA", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Beast Whisperer Companion", cmc: 4, colors: ["G"], type: "Creature", set: "GRN", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Lifecrafter's Bestiary Page", cmc: 3, colors: [], type: "Artifact", set: "AER", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Great Henge Root", cmc: 9, colors: ["G"], type: "Legendary Artifact", set: "ELD", arch: "Ramp", qty: 1, isLegend: true },
+        { name: "Trouble in Pairs Seal", cmc: 4, colors: ["W"], type: "Enchantment", set: "MKC", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Monologue Tax Ledger", cmc: 3, colors: ["W"], type: "Enchantment", set: "C21", arch: "Ramp", qty: 1, isLegend: false },
+        { name: "Loran's Third Path Relic", cmc: 3, colors: ["W"], type: "Legendary Creature", set: "BRO", arch: "Removal", qty: 1, isLegend: true },
+        { name: "Skyclave Apparition Spirit", cmc: 3, colors: ["W"], type: "Creature", set: "ZNR", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Solitude Essence", cmc: 5, colors: ["W"], type: "Creature", set: "MH2", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Grief Whispers", cmc: 4, colors: ["B"], type: "Creature", set: "MH2", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Subtlety Shard", cmc: 4, colors: ["U"], type: "Creature", set: "MH2", arch: "Control", qty: 1, isLegend: false },
+        { name: "Endurance Roots", cmc: 3, colors: ["G"], type: "Creature", set: "MH2", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Fury Flames", cmc: 5, colors: ["R"], type: "Creature", set: "MH2", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Force of Will Scroll", cmc: 5, colors: ["U"], type: "Instant/Sorcery", set: "ALL", arch: "Control", qty: 1, isLegend: false },
+        { name: "Force of Negation Shield", cmc: 3, colors: ["U"], type: "Instant/Sorcery", set: "MH1", arch: "Control", qty: 1, isLegend: false },
+        { name: "Mana Drain Catalyst", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "LEG", arch: "Control", qty: 1, isLegend: false },
+        { name: "Counterspell Wand", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "LEA", arch: "Control", qty: 2, isLegend: false },
+        { name: "Fierce Guardianship Ward", cmc: 3, colors: ["U"], type: "Instant/Sorcery", set: "C20", arch: "Control", qty: 1, isLegend: false },
+        { name: "Deflecting Swat Spark", cmc: 3, colors: ["R"], type: "Instant/Sorcery", set: "C20", arch: "Control", qty: 1, isLegend: false },
+        { name: "Deadly Rollick Dagger", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "C20", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Flawless Maneuver Crest", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "C20", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Heroic Intervention Charm", cmc: 2, colors: ["G"], type: "Instant/Sorcery", set: "AER", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Teferi's Protection Veil", cmc: 3, colors: ["W"], type: "Instant/Sorcery", set: "C17", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Cyclonic Rift Vortex", cmc: 2, colors: ["U"], type: "Instant/Sorcery", set: "RTR", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Toxic Deluge Vial", cmc: 3, colors: ["B"], type: "Instant/Sorcery", set: "C13", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Damnation Orb", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "PLC", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Wrath of God Tablet", cmc: 4, colors: ["W"], type: "Instant/Sorcery", set: "LEA", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Blasphemous Act Rune", cmc: 9, colors: ["R"], type: "Instant/Sorcery", set: "ISD", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Vanquish the Horde Blade", cmc: 8, colors: ["W"], type: "Instant/Sorcery", set: "MID", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Farewell Light", cmc: 6, colors: ["W"], type: "Instant/Sorcery", set: "NEO", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Supreme Verdict Gavel", cmc: 4, colors: ["W","U"], type: "Instant/Sorcery", set: "RTR", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Languish Smoke", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "ORI", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Crux of Fate Dragon Scale", cmc: 5, colors: ["B"], type: "Instant/Sorcery", set: "FRF", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Extinction Event Marker", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "IKO", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Shadows' Verdict Mask", cmc: 5, colors: ["B"], type: "Instant/Sorcery", set: "ZNR", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Crippling Fear Shackles", cmc: 4, colors: ["B"], type: "Instant/Sorcery", set: "KHM", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Meathook Massacre Wire", cmc: 2, colors: ["B"], type: "Enchantment", set: "MID", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Bastion of Remembrance Flag", cmc: 3, colors: ["B"], type: "Enchantment", set: "IKO", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Dreadhorde Invasion Banner", cmc: 2, colors: ["B"], type: "Enchantment", set: "WAR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Bitterblossom Petal", cmc: 2, colors: ["B"], type: "Enchantment", set: "MOR", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Skrelv's Hive Node", cmc: 2, colors: ["W"], type: "Enchantment", set: "ONE", arch: "Tokens", qty: 1, isLegend: false },
+        { name: "Ghoulcaller's Tome", cmc: 1, colors: [], type: "Artifact", set: "ISD", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Poppet Stitcher Needle", cmc: 3, colors: ["U"], type: "Creature", set: "MID", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Ophiomancer Idol", cmc: 3, colors: ["B"], type: "Creature", set: "C13", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Grave Titan Chain", cmc: 6, colors: ["B"], type: "Creature", set: "M11", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Wurmcoil Core", cmc: 6, colors: [], type: "Artifact Creature", set: "SOM", arch: "Tokens", qty: 1, isLegend: false },
+        { name: "Noxious Gearhulk Visage", cmc: 6, colors: ["B"], type: "Artifact Creature", set: "KLD", arch: "Removal", qty: 1, isLegend: false },
+        { name: "Verdurous Gearhulk Moss", cmc: 5, colors: ["G"], type: "Artifact Creature", set: "KLD", arch: "Buff", qty: 1, isLegend: false },
+        { name: "Combustible Gearhulk Ash", cmc: 6, colors: ["R"], type: "Artifact Creature", set: "KLD", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Torrential Gearhulk Wave", cmc: 6, colors: ["U"], type: "Artifact Creature", set: "KLD", arch: "Control", qty: 1, isLegend: false },
+        { name: "Cataclysmic Gearhulk Crest", cmc: 5, colors: ["W"], type: "Artifact Creature", set: "KLD", arch: "Board Wipe", qty: 1, isLegend: false },
+        { name: "Sword of Feast and Famine", cmc: 3, colors: [], type: "Artifact", set: "MBS", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Fire and Ice", cmc: 3, colors: [], type: "Artifact", set: "DST", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Light and Shadow", cmc: 3, colors: [], type: "Artifact", set: "DST", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Body and Mind", cmc: 3, colors: [], type: "Artifact", set: "SOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of War and Peace", cmc: 3, colors: [], type: "Artifact", set: "NPH", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Truth and Justice", cmc: 3, colors: [], type: "Artifact", set: "MH1", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Sinew and Steel", cmc: 3, colors: [], type: "Artifact", set: "MH1", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Hearth and Home", cmc: 3, colors: [], type: "Artifact", set: "MH2", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Forge and Frontier", cmc: 3, colors: [], type: "Artifact", set: "ONE", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of Once and Future", cmc: 3, colors: [], type: "Artifact", set: "MOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Shadowspear Point", cmc: 1, colors: [], type: "Legendary Artifact", set: "THB", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Umezawa's Jitte Edge", cmc: 2, colors: [], type: "Legendary Artifact", set: "BOK", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Batter-skull Assembly", cmc: 5, colors: [], type: "Artifact", set: "NPH", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Kaldra Compleat Relic", cmc: 7, colors: [], type: "Legendary Artifact", set: "MH2", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Hammer of Nazahn", cmc: 4, colors: [], type: "Legendary Artifact", set: "C17", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Colossus Hammer Heavy", cmc: 1, colors: [], type: "Artifact", set: "M20", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Bloodforged Battle-Axe", cmc: 1, colors: [], type: "Artifact", set: "C17", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Blackblade Reforged", cmc: 2, colors: [], type: "Legendary Artifact", set: "DOM", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Mace of the Valiant", cmc: 3, colors: ["W"], type: "Artifact", set: "ELD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Sword of the Animist", cmc: 2, colors: [], type: "Legendary Artifact", set: "ORI", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Heirloom Blade", cmc: 3, colors: [], type: "Artifact", set: "C17", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Hero's Blade", cmc: 2, colors: [], type: "Artifact", set: "FRF", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Infiltration Lens", cmc: 1, colors: [], type: "Artifact", set: "SOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Mask of Memory", cmc: 2, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Skullclamp Wire", cmc: 1, colors: [], type: "Artifact", set: "DST", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Loxodon Warhammer", cmc: 3, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Quietus Spike", cmc: 3, colors: [], type: "Artifact", set: "ALA", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Scythe of the Wretched", cmc: 5, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Argentum Armor", cmc: 6, colors: [], type: "Artifact", set: "SOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Fireshrieker", cmc: 3, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Grafted Exoskeleton", cmc: 4, colors: [], type: "Artifact", set: "SOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Whispersilk Cloak", cmc: 3, colors: [], type: "Artifact", set: "DST", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Swiftfoot Boots", cmc: 2, colors: [], type: "Artifact", set: "M12", arch: "Equipment", qty: 2, isLegend: false },
+        { name: "Lightning Greaves", cmc: 2, colors: [], type: "Artifact", set: "MRD", arch: "Equipment", qty: 2, isLegend: false },
+        { name: "Prowler's Helm", cmc: 2, colors: [], type: "Artifact", set: "THS", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Rogue's Gloves", cmc: 2, colors: [], type: "Artifact", set: "M15", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Trailblazer's Boots", cmc: 2, colors: [], type: "Artifact", set: "ZEN", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Zephyr Boots", cmc: 1, colors: [], type: "Artifact", set: "STX", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Fleetfeather Sandals", cmc: 2, colors: [], type: "Artifact", set: "THS", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Winged Boots", cmc: 2, colors: [], type: "Artifact", set: "AFR", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Strider Harness", cmc: 3, colors: [], type: "Artifact", set: "SOM", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Darksteel Plate", cmc: 3, colors: [], type: "Artifact", set: "MBS", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Shield of Kaldra", cmc: 3, colors: [], type: "Legendary Artifact", set: "DST", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Sword of Kaldra", cmc: 3, colors: [], type: "Legendary Artifact", set: "MRD", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Helm of Kaldra", cmc: 3, colors: [], type: "Legendary Artifact", set: "5DN", arch: "Equipment", qty: 1, isLegend: true },
+        { name: "Ring of Kalonia", cmc: 2, colors: [], type: "Artifact", set: "M13", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Ring of Evos Isle", cmc: 2, colors: [], type: "Artifact", set: "M13", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Ring of Xathrid", cmc: 2, colors: [], type: "Artifact", set: "M13", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Ring of Valkas", cmc: 2, colors: [], type: "Artifact", set: "M13", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Ring of Thune", cmc: 2, colors: [], type: "Artifact", set: "M13", arch: "Equipment", qty: 1, isLegend: false },
+        { name: "Mirran Spyglass", cmc: 2, colors: [], type: "Artifact", set: "MBS", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Spyglass of the Seekers", cmc: 2, colors: [], type: "Artifact", set: "MTG", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Glasses of Urza", cmc: 1, colors: [], type: "Artifact", set: "LEA", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Urza's Bauble", cmc: 0, colors: [], type: "Artifact", set: "ICE", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Mishra's Bauble", cmc: 0, colors: [], type: "Artifact", set: "CSP", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Conjurer's Bauble", cmc: 1, colors: [], type: "Artifact", set: "5DN", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Wayfarer's Bauble", cmc: 1, colors: [], type: "Artifact", set: "5DN", arch: "Ramp", qty: 2, isLegend: false },
+        { name: "Soul-Guide Lantern", cmc: 1, colors: [], type: "Artifact", set: "THB", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Relic of Progenitus", cmc: 1, colors: [], type: "Artifact", set: "ALA", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Tormod's Crypt", cmc: 0, colors: [], type: "Artifact", set: "DRK", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Nihil Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "SOM", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Scrabbling Claws", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Phyrexian Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MTG", arch: "Draw", qty: 1, isLegend: false },
+        { name: "Sunbeam Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Lifegain", qty: 1, isLegend: false },
+        { name: "Lifespark Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Utility", qty: 1, isLegend: false },
+        { name: "Aether Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Control", qty: 1, isLegend: false },
+        { name: "Flight Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "SOM", arch: "Evasion", qty: 1, isLegend: false },
+        { name: "Necrogen Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Pyrite Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "MRD", arch: "Burn", qty: 1, isLegend: false },
+        { name: "Origin Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "SOM", arch: "Tokens", qty: 1, isLegend: false },
+        { name: "Panic Spellbomb", cmc: 1, colors: [], type: "Artifact", set: "SOM", arch: "Evasion", qty: 1, isLegend: false },
+        // PART 4 OF 4: CARDS 901 TO 1,157 & COMPLETE ENGINE LOGIC
+        { name: "Bojuka Bog", cmc: 0, colors: ["B"], type: "Land", set: "WWK", arch: "Lands", qty: 2, isLegend: false },
+        { name: "Takenuma, Abandoned Mire", cmc: 0, colors: ["B"], type: "Legendary Land", set: "NEO", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Boseiju, Who Endures", cmc: 0, colors: ["G"], type: "Legendary Land", set: "NEO", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Eiganjo, Seat of the Empire", cmc: 0, colors: ["W"], type: "Legendary Land", set: "NEO", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Otawara, Soaring City", cmc: 0, colors: ["U"], type: "Legendary Land", set: "NEO", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Sokenzan, Crucible of Defiance", cmc: 0, colors: ["R"], type: "Legendary Land", set: "NEO", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Reliquary Tower", cmc: 0, colors: [], type: "Land", set: "M13", arch: "Lands", qty: 3, isLegend: false },
+        { name: "Rogue's Passage", cmc: 0, colors: [], type: "Land", set: "RTR", arch: "Lands", qty: 2, isLegend: false },
+        { name: "High Market", cmc: 0, colors: [], type: "Land", set: "MMQ", arch: "Aristocrats", qty: 1, isLegend: false },
+        { name: "Phyrexian Tower", cmc: 0, colors: ["B"], type: "Legendary Land", set: "USG", arch: "Aristocrats", qty: 1, isLegend: true },
+        { name: "Westvale Abbey", cmc: 0, colors: ["B"], type: "Land", set: "SOI", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Volrath's Stronghold", cmc: 0, colors: ["B"], type: "Legendary Land", set: "STH", arch: "Reanimation", qty: 1, isLegend: true },
+        { name: "Academy Ruins", cmc: 0, colors: ["U"], type: "Legendary Land", set: "TSP", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Hall of Heliod's Generosity", cmc: 0, colors: ["W"], type: "Legendary Land", set: "MH1", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Field of the Dead", cmc: 0, colors: [], type: "Land", set: "M20", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Scavenger Grounds", cmc: 0, colors: [], type: "Land", set: "HOU", arch: "Grave Hate", qty: 1, isLegend: false },
+        { name: "Geier Reach Sanitarium", cmc: 0, colors: [], type: "Legendary Land", set: "EMN", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Mikokoro, Center of the Sea", cmc: 0, colors: [], type: "Legendary Land", set: "SOK", arch: "Lands", qty: 1, isLegend: true },
+        { name: "War Room", cmc: 0, colors: [], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Bonders' Enclave", cmc: 0, colors: [], type: "Land", set: "IKO", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Castle Locthwain", cmc: 0, colors: ["B"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Castle Garenbrig", cmc: 0, colors: ["G"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Castle Vantress", cmc: 0, colors: ["U"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Castle Ardenvale", cmc: 0, colors: ["W"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Castle Embereth", cmc: 0, colors: ["R"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Witch's Cottage", cmc: 0, colors: ["B"], type: "Land", set: "ELD", arch: "Reanimation", qty: 1, isLegend: false },
+        { name: "Gingerbread Cabin", cmc: 0, colors: ["G"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Idyllic Grange", cmc: 0, colors: ["W"], type: "Land", set: "ELD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Dwarf Hold", cmc: 0, colors: ["R"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Hickory Woodlot", cmc: 0, colors: ["G"], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Peat Bog", cmc: 0, colors: ["B"], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Remote Farm", cmc: 0, colors: ["W"], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sandstone Needle", cmc: 0, colors: ["R"], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Saprazzan Skerry", cmc: 0, colors: ["U"], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Ebon Stronghold", cmc: 0, colors: ["B"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Havenwood Battleground", cmc: 0, colors: ["G"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Ruins of Trokair", cmc: 0, colors: ["W"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Svyelunite Temple", cmc: 0, colors: ["U"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Dwarven Ruins", cmc: 0, colors: ["R"], type: "Land", set: "FEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Vault of Champions", cmc: 0, colors: ["W","B"], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Spectator Seating", cmc: 0, colors: ["R","W"], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Training Center", cmc: 0, colors: ["U","R"], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Undergrowth Stadium", cmc: 0, colors: ["B","G"], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Rejuvenating Springs", cmc: 0, colors: ["G","U"], type: "Land", set: "CMR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Vault of Whispers", cmc: 0, colors: ["B"], type: "Artifact Land", set: "MRD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Tree of Tales", cmc: 0, colors: ["G"], type: "Artifact Land", set: "MRD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Seat of the Synod", cmc: 0, colors: ["U"], type: "Artifact Land", set: "MRD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Great Furnace", cmc: 0, colors: ["R"], type: "Artifact Land", set: "MRD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Ancient Den", cmc: 0, colors: ["W"], type: "Artifact Land", set: "MRD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Darksteel Citadel", cmc: 0, colors: [], type: "Artifact Land", set: "DST", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Arcane Lighthouse", cmc: 0, colors: [], type: "Land", set: "C14", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Detection Tower", cmc: 0, colors: [], type: "Land", set: "M19", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Homeward Path", cmc: 0, colors: [], type: "Land", set: "CMD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Command Beacon", cmc: 0, colors: [], type: "Land", set: "C15", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Spire of Industry", cmc: 0, colors: [], type: "Land", set: "AER", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Aether Hub", cmc: 0, colors: [], type: "Land", set: "KLD", arch: "Energy", qty: 1, isLegend: false },
+        { name: "Exotic Orchard", cmc: 0, colors: [], type: "Land", set: "CON", arch: "Lands", qty: 2, isLegend: false },
+        { name: "Path of Ancestry", cmc: 0, colors: [], type: "Land", set: "C17", arch: "Lands", qty: 2, isLegend: false },
+        { name: "Reflecting Pool", cmc: 0, colors: [], type: "Land", set: "TMP", arch: "Lands", qty: 1, isLegend: false },
+        { name: "City of Brass", cmc: 0, colors: [], type: "Land", set: "ARN", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Mana Confluence", cmc: 0, colors: [], type: "Land", set: "JOU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Forbidden Orchard", cmc: 0, colors: [], type: "Land", set: "CHK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Tarnished Citadel", cmc: 0, colors: [], type: "Land", set: "ODS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Gemstone Mine", cmc: 0, colors: [], type: "Land", set: "WTH", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Crystal Quarry", cmc: 0, colors: [], type: "Land", set: "ODS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Cascading Cataracts", cmc: 0, colors: [], type: "Land", set: "AKH", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Shimmering Grotto", cmc: 0, colors: [], type: "Land", set: "LRW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Unknown Shores", cmc: 0, colors: [], type: "Land", set: "THS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Holdout Settlement", cmc: 0, colors: [], type: "Land", set: "OGW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Survivors' Encampment", cmc: 0, colors: [], type: "Land", set: "HOU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Cryptic Caves", cmc: 0, colors: [], type: "Land", set: "M20", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Arch of Orazca", cmc: 0, colors: [], type: "Land", set: "RIX", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Estate Gate", cmc: 0, colors: [], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Cliffgate", cmc: 0, colors: ["R"], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Black Dragon Gate", cmc: 0, colors: ["B"], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Citadel Gate", cmc: 0, colors: ["W"], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sea Gate", cmc: 0, colors: ["U"], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Gond Gate", cmc: 0, colors: [], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Heap Gate", cmc: 0, colors: [], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Manor Gate", cmc: 0, colors: ["G"], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Baldur's Gate", cmc: 0, colors: [], type: "Land", set: "CLB", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Thran Portal", cmc: 0, colors: [], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Demolition Field", cmc: 0, colors: [], type: "Land", set: "BRO", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Field of Ruin", cmc: 0, colors: [], type: "Land", set: "XLN", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Ghost Quarter", cmc: 0, colors: [], type: "Land", set: "DIS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Tectonic Edge", cmc: 0, colors: [], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Encroaching Wastes", cmc: 0, colors: [], type: "Land", set: "M14", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Wasteland", cmc: 0, colors: [], type: "Land", set: "TMP", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Strip Mine", cmc: 0, colors: [], type: "Land", set: "ATQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Dust Bowl", cmc: 0, colors: [], type: "Land", set: "MMQ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Deserted Temple", cmc: 0, colors: [], type: "Land", set: "ODS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Nykthos, Shrine to Nyx", cmc: 0, colors: [], type: "Legendary Land", set: "THS", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Cabal Coffers", cmc: 0, colors: ["B"], type: "Land", set: "TOR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Cabal Stronghold", cmc: 0, colors: ["B"], type: "Land", set: "DOM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Urborg, Tomb of Yawgmoth", cmc: 0, colors: [], type: "Legendary Land", set: "PLC", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Yavimaya, Cradle of Growth", cmc: 0, colors: [], type: "Legendary Land", set: "MH2", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Crypt of Agadeem", cmc: 0, colors: ["B"], type: "Land", set: "ZEN", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Lake of the Dead", cmc: 0, colors: ["B"], type: "Land", set: "ALL", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Phyrexian Devourer Land", cmc: 0, colors: [], type: "Land", set: "ALL", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Volcano Hellion Ridge", cmc: 0, colors: ["R"], type: "Land", set: "PLC", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Glacial Chasm", cmc: 0, colors: [], type: "Land", set: "ICE", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Maze of Ith", cmc: 0, colors: [], type: "Land", set: "DRK", arch: "Defense", qty: 1, isLegend: false },
+        { name: "Kor Haven", cmc: 0, colors: ["W"], type: "Legendary Land", set: "NEM", arch: "Defense", qty: 1, isLegend: true },
+        { name: "Prahv, Spires of Order", cmc: 0, colors: ["W","U"], type: "Land", set: "DIS", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sunhome, Fortress of the Legion", cmc: 0, colors: ["R","W"], type: "Land", set: "RAV", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Skarrg, the Rage Pits", cmc: 0, colors: ["R","G"], type: "Land", set: "GPT", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Vitu-Ghazi, the City-Tree", cmc: 0, colors: ["G","W"], type: "Land", set: "RAV", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Svogthos, the Restless Tomb", cmc: 0, colors: ["B","G"], type: "Land", set: "RAV", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Duskmantle, House of Shadow", cmc: 0, colors: ["U","B"], type: "Land", set: "RAV", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Nivix, Aerie of the Firemind", cmc: 0, colors: ["U","R"], type: "Land", set: "GPT", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Orzhova, the Church of Deals", cmc: 0, colors: ["W","B"], type: "Land", set: "GPT", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Rath's Edge", cmc: 0, colors: [], type: "Legendary Land", set: "NEM", arch: "Lands", qty: 1, isLegend: true },
+        { name: "Kor Haven Garrison", cmc: 0, colors: ["W"], type: "Land", set: "NEM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Kessig Wolf Run", cmc: 0, colors: ["R","G"], type: "Land", set: "ISD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Gavony Township", cmc: 0, colors: ["G","W"], type: "Land", set: "ISD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Moorland Haunt", cmc: 0, colors: ["W","U"], type: "Land", set: "ISD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Nephalia Drownyard", cmc: 0, colors: ["U","B"], type: "Land", set: "ISD", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Vault of the Archangel", cmc: 0, colors: ["W","B"], type: "Land", set: "DKA", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Alchemist's Refuge", cmc: 0, colors: ["G","U"], type: "Land", set: "AVR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Slayer's Stronghold", cmc: 0, colors: ["R","W"], type: "Land", set: "AVR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Desolate Lighthouse", cmc: 0, colors: ["U","R"], type: "Land", set: "AVR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Grim Backwoods", cmc: 0, colors: ["B","G"], type: "Land", set: "DKA", arch: "Gothic", qty: 1, isLegend: false },
+        { name: "Rogue's Hideout", cmc: 0, colors: [], type: "Land", set: "RTR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Spawning Bed", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Foundry of the Consuls", cmc: 0, colors: [], type: "Land", set: "ORI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Gargoyle Castle", cmc: 0, colors: [], type: "Land", set: "M10", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Mage-Ring Network", cmc: 0, colors: [], type: "Land", set: "ORI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Dread Statuary", cmc: 0, colors: [], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Stirring Wildwood", cmc: 0, colors: ["G","W"], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Raging Ravine", cmc: 0, colors: ["R","G"], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Lumbering Falls", cmc: 0, colors: ["G","U"], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Celestial Colonnade", cmc: 0, colors: ["W","U"], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Creeping Tar Pit", cmc: 0, colors: ["U","B"], type: "Land", set: "WWK", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Hissing Quagmire", cmc: 0, colors: ["B","G"], type: "Land", set: "OGW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Needleverge Pathway", cmc: 0, colors: ["R","W"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Hengegate Pathway", cmc: 0, colors: ["W","U"], type: "Land", set: "KHM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Branchloft Pathway", cmc: 0, colors: ["G","W"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Brightclimb Pathway", cmc: 0, colors: ["W","B"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Clearwater Pathway", cmc: 0, colors: ["U","B"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Cragcrown Pathway", cmc: 0, colors: ["R","G"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Darkbore Pathway", cmc: 0, colors: ["B","G"], type: "Land", set: "KHM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Riverglide Pathway", cmc: 0, colors: ["U","R"], type: "Land", set: "ZNR", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Barkchannel Pathway", cmc: 0, colors: ["G","U"], type: "Land", set: "KHM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Blightstep Pathway", cmc: 0, colors: ["B","R"], type: "Land", set: "KHM", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Kaldheim Snow Swamp", cmc: 0, colors: ["B"], type: "Basic Land", set: "KHM", arch: "Lands", qty: 5, isLegend: false },
+        { name: "Kaldheim Snow Forest", cmc: 0, colors: ["G"], type: "Basic Land", set: "KHM", arch: "Lands", qty: 5, isLegend: false },
+        { name: "Kaldheim Snow Plains", cmc: 0, colors: ["W"], type: "Basic Land", set: "KHM", arch: "Lands", qty: 5, isLegend: false },
+        { name: "Kaldheim Snow Mountain", cmc: 0, colors: ["R"], type: "Basic Land", set: "KHM", arch: "Lands", qty: 5, isLegend: false },
+        { name: "Kaldheim Snow Island", cmc: 0, colors: ["U"], type: "Basic Land", set: "KHM", arch: "Lands", qty: 5, isLegend: false },
+        { name: "Ash Barrens", cmc: 0, colors: [], type: "Land", set: "C16", arch: "Lands", qty: 2, isLegend: false },
+        { name: "Evolving Wilds Core", cmc: 0, colors: [], type: "Land", set: "ROE", arch: "Lands", qty: 3, isLegend: false },
+        { name: "Terramorphic Expanse Core", cmc: 0, colors: [], type: "Land", set: "TSP", arch: "Lands", qty: 3, isLegend: false },
+        { name: "Myriad Landscape", cmc: 0, colors: [], type: "Land", set: "C14", arch: "Lands", qty: 2, isLegend: false },
+        { name: "Blighted Woodland", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Blighted Fen", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Blighted Cataract", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Blighted Gorge", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Blighted Steppe", cmc: 0, colors: [], type: "Land", set: "BFZ", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Haunted Mire", cmc: 0, colors: ["B","G"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Idyllic Beachfront", cmc: 0, colors: ["W","U"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Radiant Grove", cmc: 0, colors: ["G","W"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sunlit Marsh", cmc: 0, colors: ["W","B"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Tangling Islet", cmc: 0, colors: ["G","U"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Wooded Ridgeline", cmc: 0, colors: ["R","G"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Contaminated Aquifer", cmc: 0, colors: ["U","B"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Geothermal Bog", cmc: 0, colors: ["B","R"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Molten Tributary", cmc: 0, colors: ["U","R"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sacred Peaks", cmc: 0, colors: ["R","W"], type: "Land", set: "DMU", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Overgrown Farmland", cmc: 0, colors: ["G","W"], type: "Land", set: "MID", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Deserted Beach", cmc: 0, colors: ["W","U"], type: "Land", set: "MID", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Haunted Ridge", cmc: 0, colors: ["B","R"], type: "Land", set: "MID", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Rockfall Vale", cmc: 0, colors: ["R","G"], type: "Land", set: "MID", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Shipwreck Marsh", cmc: 0, colors: ["U","B"], type: "Land", set: "MID", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Dreamroot Cascade", cmc: 0, colors: ["G","U"], type: "Land", set: "VOW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Shattered Sanctum", cmc: 0, colors: ["W","B"], type: "Land", set: "VOW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Stormcarved Coast", cmc: 0, colors: ["U","R"], type: "Land", set: "VOW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sundown Pass", cmc: 0, colors: ["R","W"], type: "Land", set: "VOW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Deathcap Glade", cmc: 0, colors: ["B","G"], type: "Land", set: "VOW", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Bivouac", cmc: 0, colors: ["R","W"], type: "Land", set: "WOE", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Fortress", cmc: 0, colors: ["W","B"], type: "Land", set: "WOE", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Cottage", cmc: 0, colors: ["B","G"], type: "Land", set: "WOE", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Spire", cmc: 0, colors: ["U","R"], type: "Land", set: "WOE", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Reef", cmc: 0, colors: ["G","U"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Vents", cmc: 0, colors: ["B","R"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Anchorage", cmc: 0, colors: ["W","U"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Prairie", cmc: 0, colors: ["G","W"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Ridge", cmc: 0, colors: ["R","G"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Restless Marsh", cmc: 0, colors: ["U","B"], type: "Land", set: "LCI", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Llanowar Reaches", cmc: 0, colors: ["G"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sylvan Basin", cmc: 0, colors: ["G"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Gloom Mire", cmc: 0, colors: ["B"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Sunstone Quarry", cmc: 0, colors: ["W"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Frost peak Summit", cmc: 0, colors: ["U"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Windswept Crag", cmc: 0, colors: ["R"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Volcanic Ridge", cmc: 0, colors: ["R"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Ethereal Valley", cmc: 0, colors: ["W"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Obsidian Crater", cmc: 0, colors: ["B"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Chrono Spring", cmc: 0, colors: ["U"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Void Abyss", cmc: 0, colors: ["B"], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Titan's Graveyard", cmc: 0, colors: [], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false },
+        { name: "Crystal Cavern", cmc: 0, colors: [], type: "Land", set: "MTG", arch: "Lands", qty: 1, isLegend: false }
     ];
 
     let masterCatalog = [];
 
     function initApp() {
-        masterCatalog = rawMasterList.map(name => {
-            const cleanName = name.replace(/^\d+\s+/, "").trim();
-            const isLeg = ["Lord", "Shredder", "Slimefoot", "Frodo", "Sam", "Splinter", "Vraska", "Gix", "Captain", "Pia", "Saheeli", "Loot", "Winter", "Tetsuko", "Arni", "Teyo", "Koth", "Thranduil", "Bilbo", "Beorn", "Tom", "Galion", "Bombur", "Gollum", "Azog", "Bolg", "Dori", "Gandalf", "Lorcan", "Taborax", "Sauron", "Saruman", "Mothman", "Master"].some(k => cleanName.includes(k));
-            
-            let cardType = isLeg ? "Legendary Creature" : "Creature";
-            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town","Mirkwood"].some(l => cleanName.includes(l)) || cleanName.includes("Gate") || cleanName.includes("Pathway") || cleanName.includes("Ridge") || cleanName.includes("Bog")) {
-                cardType = "Land";
-            } else if (["Signet","Lantern","Talisman","Archive","Stone","Bankbuster","Mirror","Sword","Endstone","Map","Ring","Vault","Catalyst"].some(a => cleanName.includes(a))) {
-                cardType = "Artifact";
-            } else if (["End","Judgment","Charm","Wrath","Slice","Teeth","Bog","Sabotage","Brutality","Tidings","Foretold","Essence","Burst","Pulse"].some(s => cleanName.includes(s))) {
-                cardType = "Instant/Sorcery";
-            }
+        masterCatalog = rawMasterList;
 
-            return { name: cleanName, type: cardType, isLegend: isLeg };
-        });
-
-        document.getElementById("cardCounter").innerText = `${masterCatalog.length} Total Cards Vaulted`;
+        const totalQty = masterCatalog.reduce((sum, c) => sum + (c.qty || 1), 0);
+        document.getElementById("cardCounter").innerText = `${totalQty} Cards Vaulted (${masterCatalog.length} Unique)`;
         
         const legendCount = masterCatalog.filter(c => c.isLegend).length;
         document.getElementById("commanderCounter").innerText = `${legendCount} Commanders`;
@@ -485,7 +1050,7 @@
         legends.forEach(l => {
             const opt = document.createElement("option");
             opt.value = l.name;
-            opt.innerText = `${l.name} (${l.type})`;
+            opt.innerText = `${l.name} (${l.set} - ${l.type})`;
             dropdown.appendChild(opt);
         });
     }
@@ -499,25 +1064,57 @@
             cardEl.className = "card-item";
             const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
 
+            const colorsText = card.colors.length > 0 ? card.colors.join("/") : "Colorless";
+
             cardEl.innerHTML = `
                 <img class="card-img" src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.src='https://cards.scryfall.io/back.png'">
                 <div class="card-info">
                     <div class="card-title">${card.name}</div>
-                    <div class="card-type">${card.type}</div>
+                    <div class="card-meta">
+                        <span>${card.type}</span>
+                        <span>${card.cmc > 0 ? card.cmc + ' CMC' : 'Land'}</span>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag tag-set">${card.set}</span>
+                        <span class="tag tag-theme">${card.arch}</span>
+                        <span class="tag">${colorsText}</span>
+                        ${card.qty > 1 ? `<span class="tag tag-qty">x${card.qty}</span>` : ''}
+                    </div>
                 </div>
             `;
             container.appendChild(cardEl);
         });
     }
-
     function filterCollection() {
         const search = document.getElementById("searchInput").value.toLowerCase();
         const type = document.getElementById("typeFilter").value;
+        const cmc = document.getElementById("cmcFilter").value;
+        const color = document.getElementById("colorFilter").value;
+        const theme = document.getElementById("themeFilter").value;
 
         const filtered = masterCatalog.filter(c => {
-            const matchSearch = c.name.toLowerCase().includes(search);
+            const matchSearch = c.name.toLowerCase().includes(search) || 
+                                c.arch.toLowerCase().includes(search) || 
+                                c.set.toLowerCase().includes(search);
+            
             const matchType = type === "ALL" || (type === "Legendary" && c.isLegend) || c.type.includes(type);
-            return matchSearch && matchType;
+            
+            const matchCMC = cmc === "ALL" || 
+                             (cmc === "5" && c.cmc >= 5) || 
+                             (c.cmc.toString() === cmc);
+
+            let matchColor = true;
+            if (color === "MULTI") matchColor = c.colors.length > 1;
+            else if (color === "COLORLESS") matchColor = c.colors.length === 0;
+            else if (color !== "ALL") matchColor = c.colors.includes(color);
+
+            let matchTheme = true;
+            if (theme === "LOTR") matchTheme = c.arch === "LOTR" || c.set === "LTR" || c.set === "LTC";
+            else if (theme === "TMNT") matchTheme = c.arch === "TMNT" || c.set === "TMN";
+            else if (theme === "Fallout") matchTheme = c.arch === "Fallout" || c.set === "PIP";
+            else if (theme === "Gothic") matchTheme = c.arch === "Gothic" || c.arch === "Aristocrats" || c.arch === "Reanimation";
+
+            return matchSearch && matchType && matchCMC && matchColor && matchTheme;
         });
 
         renderCollection(filtered);
@@ -528,49 +1125,90 @@
         document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
         document.getElementById(tabId).classList.add("active");
         evt.target.classList.add("active");
-    }
-
+    } 
     function buildOptimalDeck() {
         const cmdName = document.getElementById("commanderDropdown").value;
+        const cmdCard = masterCatalog.find(c => c.name === cmdName);
+        
         const display = document.getElementById("deckDisplay");
+        const analyticsPanel = document.getElementById("deckAnalyticsPanel");
         display.style.display = "grid";
+        analyticsPanel.style.display = "block";
 
         const pool = masterCatalog.filter(c => c.name !== cmdName);
-        const creatures = pool.filter(c => c.type === "Creature" || c.type === "Legendary Creature");
-        const spells = pool.filter(c => c.type === "Instant/Sorcery");
-        const artifacts = pool.filter(c => c.type === "Artifact");
-        const lands = pool.filter(c => c.type === "Land" && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
+        const creatures = pool.filter(c => c.type.includes("Creature"));
+        const spells = pool.filter(c => c.type.includes("Instant") || c.type.includes("Sorcery") || c.type.includes("Enchantment"));
+        const artifacts = pool.filter(c => c.type.includes("Artifact"));
+        const lands = pool.filter(c => c.type.includes("Land") && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
 
         const selectedCreatures = creatures.slice(0, 32);
         const selectedSpells = spells.slice(0, 18);
         const selectedArtifacts = artifacts.slice(0, 12);
         const selectedLands = lands.slice(0, 8);
 
-        const totalSelected = 1 + selectedCreatures.length + selectedSpells.length + selectedArtifacts.length + selectedLands.length;
+        const fullDeck = [cmdCard, ...selectedCreatures, ...selectedSpells, ...selectedArtifacts, ...selectedLands];
+
+        renderManaCurve(fullDeck);
+
+        const totalSelected = fullDeck.length;
         const basicsNeeded = 100 - totalSelected;
 
         display.innerHTML = `
             <div class="deck-col">
                 <h3>Command Zone (1)</h3>
-                <ul class="deck-list"><li><strong>1x ${cmdName}</strong></li></ul>
+                <ul class="deck-list"><li><strong>1x ${cmdName} (${cmdCard.set})</strong></li></ul>
                 <h3>Synergy Creatures (${selectedCreatures.length})</h3>
-                <ul class="deck-list">${selectedCreatures.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <ul class="deck-list">${selectedCreatures.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
             </div>
             <div class="deck-col">
-                <h3>Spells & Removal (${selectedSpells.length})</h3>
-                <ul class="deck-list">${selectedSpells.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <h3>Spells & Enchantments (${selectedSpells.length})</h3>
+                <ul class="deck-list">${selectedSpells.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
                 <h3>Ramp & Artifacts (${selectedArtifacts.length})</h3>
-                <ul class="deck-list">${selectedArtifacts.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <ul class="deck-list">${selectedArtifacts.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
             </div>
             <div class="deck-col">
-                <h3>Lands & Mana Base (${selectedLands.length + basicsNeeded})</h3>
+                <h3>Non-Basic Lands (${selectedLands.length})</h3>
+                <ul class="deck-list">${selectedLands.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <h3>Basic Mana Base (${basicsNeeded})</h3>
                 <ul class="deck-list">
-                    ${selectedLands.map(c => `<li>1x ${c.name}</li>`).join("")}
-                    <li>${Math.ceil(basicsNeeded * 0.5)}x Basic Swamps / Forests</li>
-                    <li>${Math.floor(basicsNeeded * 0.5)}x Basic Mountains / Plains / Islands</li>
+                    <li><span>${Math.ceil(basicsNeeded * 0.5)}x Basic Swamps / Forests</span></li>
+                    <li><span>${Math.floor(basicsNeeded * 0.5)}x Basic Mountains / Plains / Islands</span></li>
                 </ul>
             </div>
         `;
+    }
+
+    function renderManaCurve(deck) {
+        const chart = document.getElementById("manaChart");
+        chart.innerHTML = "";
+
+        const curve = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, "6+": 0 };
+
+        deck.forEach(c => {
+            if (c.type.includes("Land")) return;
+            if (c.cmc === 1) curve[1]++;
+            else if (c.cmc === 2) curve[2]++;
+            else if (c.cmc === 3) curve[3]++;
+            else if (c.cmc === 4) curve[4]++;
+            else if (c.cmc === 5) curve[5]++;
+            else if (c.cmc >= 6) curve["6+"]++;
+        });
+
+        const maxCount = Math.max(...Object.values(curve), 1);
+
+        Object.keys(curve).forEach(cmcKey => {
+            const count = curve[cmcKey];
+            const heightPct = (count / maxCount) * 100;
+
+            const barWrapper = document.createElement("div");
+            barWrapper.className = "chart-bar-wrapper";
+            barWrapper.innerHTML = `
+                <div class="chart-count">${count}</div>
+                <div class="chart-bar" style="height: ${heightPct}%;"></div>
+                <div class="chart-label">${cmcKey} CMC</div>
+            `;
+            chart.appendChild(barWrapper);
+        });
     }
 
     window.onload = initApp;
