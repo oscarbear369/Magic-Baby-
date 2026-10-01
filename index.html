@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscar's MTG Archival Hub</title>
+    <title>Oscar's MTG Master Vault & Synergy Engine</title>
     <script src="cards.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
             --panel-bg: #1e293b;
+            --panel-border: #334155;
             --accent: #8b5cf6;
             --accent-hover: #7c3aed;
+            --accent-green: #10b981;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #334155;
+            --card-bg: #0d1527;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -28,14 +32,22 @@
 
         header {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 2px solid var(--panel-border);
             padding-bottom: 16px;
             margin-bottom: 20px;
+            gap: 12px;
         }
 
         h1 { margin: 0; font-size: 1.6rem; color: #f8fafc; }
+
+        .stats-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
 
         .badge {
             background-color: var(--accent);
@@ -46,16 +58,19 @@
             font-size: 0.85rem;
         }
 
-        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .badge-green { background-color: var(--accent-green); }
+
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
         .tab-btn {
             background: var(--panel-bg);
             color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 10px 16px;
+            border: 1px solid var(--panel-border);
+            padding: 10px 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.2s ease;
         }
 
         .tab-btn.active {
@@ -69,25 +84,31 @@
 
         .panel {
             background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
         }
 
         input, select, button {
             background-color: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--panel-border);
             color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
         }
 
         .btn-action {
@@ -96,52 +117,106 @@
             font-weight: bold;
             color: white;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
         .btn-action:hover { background-color: var(--accent-hover); }
 
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 16px;
         }
 
         .card-item {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
         }
 
         .card-img {
             width: 100%;
-            height: 250px;
+            height: 260px;
             object-fit: cover;
             background: #1e293b;
         }
 
-        .card-info { padding: 10px; }
-        .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
+        .card-info { padding: 12px; }
+        .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; color: #fff; }
         .card-type { font-size: 0.8rem; color: var(--text-muted); }
+
+        .tag-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+        .tag {
+            background-color: #334155;
+            color: #cbd5e1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+
+        .deck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
 
         .deck-output {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
         .deck-col {
             background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 14px;
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 16px;
         }
 
-        .deck-col h3 { margin-top: 0; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 4px 0; font-size: 0.85rem; border-bottom: 1px solid #26334d; }
+        .deck-col h3 {
+            margin-top: 0;
+            color: var(--accent);
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        ul.deck-list { list-style: none; padding: 0; margin: 0; }
+        ul.deck-list li {
+            padding: 6px 0;
+            font-size: 0.88rem;
+            border-bottom: 1px solid #26334d;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        ul.deck-list li span.type-label {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .summary-box {
+            background: #0d1527;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -149,29 +224,42 @@
 <div class="container">
     <header>
         <div>
-            <h1>Oscar's MTG Master Hub</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Full Dynamic Collection & Commander Engine</div>
+            <h1>Oscar's MTG Master Vault</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Smart Color-Identity & Optimal Deckbuilding Engine</div>
         </div>
-        <div class="badge" id="cardCounter">Loading Catalog...</div>
+        <div class="stats-bar">
+            <div class="badge" id="cardCounter">0 Cards Indexed</div>
+            <div class="badge badge-green" id="commanderCounter">0 Commanders</div>
+        </div>
     </header>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
-        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder</button>
+        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search & Vault</button>
+        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder Engine</button>
     </div>
 
     <!-- SEARCH TAB -->
     <div id="searchTab" class="tab-content active">
         <div class="panel">
             <div class="controls-grid">
-                <input type="text" id="searchInput" placeholder="Search any card in your collection..." onkeyup="filterCollection()">
+                <input type="text" id="searchInput" placeholder="Search 1,157 cards by name..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
-                    <option value="ALL">All Types</option>
+                    <option value="ALL">All Card Types</option>
                     <option value="Legendary">Legendary Commanders</option>
                     <option value="Creature">Creatures</option>
-                    <option value="Instant">Instants / Sorceries</option>
-                    <option value="Artifact">Artifacts / Ramp</option>
+                    <option value="Instant/Sorcery">Instants & Sorceries</option>
+                    <option value="Artifact">Artifacts & Ramp</option>
                     <option value="Land">Lands</option>
+                </select>
+                <select id="colorFilter" onchange="filterCollection()">
+                    <option value="ALL">All Colors</option>
+                    <option value="B">Black</option>
+                    <option value="G">Green</option>
+                    <option value="W">White</option>
+                    <option value="R">Red</option>
+                    <option value="U">Blue</option>
+                    <option value="MULTI">Multicolor</option>
+                    <option value="COLORLESS">Colorless / Artifacts</option>
                 </select>
             </div>
         </div>
@@ -181,72 +269,131 @@
     <!-- DECKBUILDER TAB -->
     <div id="builderTab" class="tab-content">
         <div class="panel">
-            <h2>Select ANY Commander in Your Collection</h2>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <select id="commanderDropdown" style="flex-grow: 1;"></select>
-                <button class="btn-action" onclick="buildDeckForCommander()">Auto-Build 100-Card Deck</button>
+            <h2>Optimal Commander Deckbuilder Engine</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">Select any commander in your inventory. The engine analyzes its exact color identity, pulls every legal card from your 1,157-card collection, prioritizes top synergies, and constructs a balanced, optimal 100-card Commander deck.</p>
+            <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+                <select id="commanderDropdown" style="flex: 2; min-width: 250px;"></select>
+                <button class="btn-action" style="flex: 1; min-width: 200px;" onclick="buildOptimalDeck()">Generate Best 100-Card Deck</button>
             </div>
         </div>
-        <div class="deck-output" id="deckDisplay" style="display: none;"></div>
+
+        <div id="deckOutputContainer" style="display: none;">
+            <div class="summary-box" id="deckSummary"></div>
+            <div class="deck-header">
+                <h2 id="generatedDeckTitle" style="margin:0;">Deck List</h2>
+                <button class="btn-action" style="width: auto; padding: 8px 16px;" onclick="copyDeckList()">Copy Export Text (MTGA / Moxfield)</button>
+            </div>
+            <div class="deck-output" id="deckDisplay"></div>
+        </div>
     </div>
 </div>
 
 <script>
     let masterCatalog = [];
+    let generatedRawText = "";
 
-    const legendsMap = {
-        "Myrkul, Lord of Bones": "Legendary Creature",
-        "Slimefoot, the Stowaway": "Legendary Creature",
-        "Frodo, Adventurous Hobbit": "Legendary Creature",
-        "Sam, Loyal Attendant": "Legendary Creature",
-        "Oroku Saki, Shredder Rising": "Legendary Creature",
-        "Splinter, Hamato Yoshi": "Legendary Creature",
-        "Michelangelo, Game Master": "Legendary Creature",
-        "April O'Neil, Kunoichi Trainer": "Legendary Creature",
-        "Jennika, Bad Apple Big Sister": "Legendary Creature",
-        "Vraska, Soul of Stone": "Planeswalker",
-        "Vraska, the Cutting Glare": "Planeswalker",
-        "Pia, Determined Rebuilder": "Legendary Creature",
-        "Pia, Aether Ascetic": "Legendary Creature",
-        "Saheeli, Consul of Oversight": "Legendary Creature",
-        "Loot, the Nexus": "Legendary Creature",
-        "Winter, Team Player": "Legendary Creature",
-        "Tetsuko Umezawa, Pursuer": "Legendary Creature",
-        "Arni, Renowned Champion": "Legendary Creature",
-        "Teyo, Lightshield Expert": "Legendary Creature",
-        "Koth, the Geomancer": "Planeswalker",
-        "Thranduil, Sindarin Liege": "Legendary Creature",
-        "Bilbo Baggins, Burglar": "Legendary Creature",
-        "Beorn, Reluctant Host": "Legendary Creature",
-        "Tom, Bert, and William": "Legendary Creature",
-        "Galion, Elvenking's Butler": "Legendary Creature",
-        "Bombur, Gentle Dreamer": "Legendary Creature",
-        "Gollum the Abandoned": "Legendary Creature",
-        "Azog, Moria's Ruin": "Legendary Creature",
-        "Bolg of the North": "Legendary Creature",
-        "Dori, Bearer of Friends": "Legendary Creature",
-        "Gandalf, Spark Starter": "Legendary Creature",
-        "Gollum, Silent Slinker": "Legendary Creature",
-        "Lorcan, Warlock Collector": "Legendary Creature",
-        "Taborax, Hope's Demise": "Legendary Creature"
+    // Color Identity and Type Registry
+    const legendDatabase = {
+        "Myrkul, Lord of Bones": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Aristocrats / Enchantments" },
+        "Slimefoot, the Stowaway": { colors: ["B","G"], type: "Legendary Creature", arch: "Aristocrats / Saprolings" },
+        "Frodo, Adventurous Hobbit": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Food Tokens" },
+        "Sam, Loyal Attendant": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Food Tokens / Life" },
+        "Oroku Saki, Shredder Rising": { colors: ["B"], type: "Legendary Creature", arch: "Ninja / Aggro" },
+        "Splinter, Hamato Yoshi": { colors: ["G"], type: "Legendary Creature", arch: "Counters / Martial" },
+        "Michelangelo, Game Master": { colors: ["R"], type: "Legendary Creature", arch: "Chaos / Combat" },
+        "April O'Neil, Kunoichi Trainer": { colors: ["U"], type: "Legendary Creature", arch: "Evasion / Draw" },
+        "Jennika, Bad Apple Big Sister": { colors: ["B"], type: "Legendary Creature", arch: "Aristocrats / Aggro" },
+        "Vraska, Soul of Stone": { colors: ["B","G"], type: "Planeswalker Commander", arch: "Removal / Tokens" },
+        "Vraska, the Cutting Glare": { colors: ["B","G"], type: "Planeswalker Commander", arch: "Deathtouch / Control" },
+        "Pia, Determined Rebuilder": { colors: ["R"], type: "Legendary Creature", arch: "Exile / Artifacts" },
+        "Pia, Aether Ascetic": { colors: ["G"], type: "Legendary Creature", arch: "Energy / Ramp" },
+        "Saheeli, Consul of Oversight": { colors: ["U","R"], type: "Legendary Creature", arch: "Thopters / Artifacts" },
+        "Loot, the Nexus": { colors: ["G","U","R"], type: "Legendary Creature", arch: "Exile Engine" },
+        "Winter, Team Player": { colors: ["B","R"], type: "Legendary Creature", arch: "Delirium / Sac" },
+        "Tetsuko Umezawa, Pursuer": { colors: ["U"], type: "Legendary Creature", arch: "Unblockable" },
+        "Arni, Renowned Champion": { colors: ["R"], type: "Legendary Creature", arch: "Boast / Aggro" },
+        "Teyo, Lightshield Expert": { colors: ["W"], type: "Legendary Creature", arch: "Tokens / Defense" },
+        "Koth, the Geomancer": { colors: ["R"], type: "Planeswalker Commander", arch: "Mountains / Burn" },
+        "Thranduil, Sindarin Liege": { colors: ["G","U"], type: "Legendary Creature", arch: "Elves / Draw" },
+        "Bilbo Baggins, Burglar": { colors: ["U","R"], type: "Legendary Creature", arch: "Treasure Engine" },
+        "Beorn, Reluctant Host": { colors: ["G"], type: "Legendary Creature", arch: "Beasts / Aggro" },
+        "Tom, Bert, and William": { colors: ["R","G"], type: "Legendary Creature", arch: "Trolls / Food" },
+        "Galion, Elvenking's Butler": { colors: ["G","U"], type: "Legendary Creature", arch: "Elves / Scry" },
+        "Bombur, Gentle Dreamer": { colors: ["R"], type: "Legendary Creature", arch: "Dwarves / Treasures" },
+        "Gollum the Abandoned": { colors: ["B"], type: "Legendary Creature", arch: "Graveyard / Sac" },
+        "Azog, Moria's Ruin": { colors: ["B","R"], type: "Legendary Creature", arch: "Orcs / Mill" },
+        "Bolg of the North": { colors: ["B","R"], type: "Legendary Creature", arch: "Aggro / Goblins" },
+        "Dori, Bearer of Friends": { colors: ["W"], type: "Legendary Creature", arch: "Equipment / Tokens" },
+        "Gandalf, Spark Starter": { colors: ["U","R","W"], type: "Legendary Creature", arch: "Spellslinger" },
+        "Gollum, Silent Slinker": { colors: ["B"], type: "Legendary Creature", arch: "Ring / Evasion" },
+        "Lorcan, Warlock Collector": { colors: ["B"], type: "Legendary Creature", arch: "Reanimation" },
+        "Taborax, Hope's Demise": { colors: ["B"], type: "Legendary Creature", arch: "Clerics / Sac" },
+        "Sauron, the Dark Lord": { colors: ["U","B","R"], type: "Legendary Creature", arch: "Amass Orcs / Ring" },
+        "Sauron, Lord of the Rings": { colors: ["U","B","R"], type: "Legendary Creature", arch: "Reanimation / Mill" },
+        "Witch-king of Angmar": { colors: ["B"], type: "Legendary Creature", arch: "Discard / Evasion" },
+        "Saruman of Many Colors": { colors: ["W","U","B"], type: "Legendary Creature", arch: "Spells / Steal" },
+        "Shelob, Child of Ungoliant": { colors: ["B","G"], type: "Legendary Creature", arch: "Spiders / Deathtouch" },
+        "Aragorn, King of Gondor": { colors: ["U","R","W"], type: "Legendary Creature", arch: "Monarch / Humans" },
+        "Tom Bombadil": { colors: ["W","U","B","R","G"], type: "Legendary Creature", arch: "Sagas / Enchantments" }
     };
 
+    function determineCardDetails(name) {
+        if (legendDatabase[name]) {
+            return {
+                name: name,
+                type: legendDatabase[name].type,
+                colors: legendDatabase[name].colors,
+                isLegend: true,
+                arch: legendDatabase[name].arch
+            };
+        }
+
+        let type = "Creature";
+        let colors = [];
+
+        // Basic & Dual Lands
+        if (["Swamp","Takenuma, Abandoned Mire","Bojuka Bog","Vault of Whispers","Restless Cottage","Overgrown Tomb","Godless Shrine","Blood Crypt","Caves of Koilos","Llanowar Wastes","Underground River","Twilight Mire","Fetid Heath","Graven Cairns","Vault of Champions","Undergrowth Stadium","Hengegate Pathway","Darkbore Pathway","Blightstep Pathway","Deathcap Glade"].includes(name)) {
+            type = "Land"; colors = ["B"];
+        } else if (["Forest","Boseiju, Who Endures","Tree of Tales","Temple Garden","Stomping Ground","Breeding Pool","Brushland","Karplusan Forest","Yavimaya Coast","Flooded Grove","Rejuvenating Springs","Branchloft Pathway","Barkchannel Pathway","Restless Prairie"].includes(name)) {
+            type = "Land"; colors = ["G"];
+        } else if (["Plains","Eiganjo, Seat of the Empire","Ancient Den","Adarkar Wastes","Battlefield Forge","Rugged Prairie","Clearwater Pathway","Brightclimb Pathway"].includes(name)) {
+            type = "Land"; colors = ["W"];
+        } else if (["Mountain","Sokenzan, Crucible of Defiance","Great Furnace","Sulfurous Springs","Shivan Reef","Cascading Cataracts"].includes(name)) {
+            type = "Land"; colors = ["R"];
+        } else if (["Island","Otawara, Soaring City","Seat of the Synod"].includes(name)) {
+            type = "Land"; colors = ["U"];
+        } else if (name.includes("Land") || name.includes("Commons") || name.includes("Annex") || name.includes("Gate") || name.includes("Tower") || name.includes("Passage") || name.includes("Orchard") || name.includes("Commons")) {
+            type = "Land"; colors = [];
+        } 
+        // Artifacts & Ramp
+        else if (["Arcane Signet","Sol Ring","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone","Thrór's Map","Pip-Boy 3000","Lightning Greaves","Swiftfoot Boots","Skullclamp","Ashnod's Altar","Phyrexian Altar","Aetherflux Reservoir","Bolas's Citadel","Sensei's Divining Top","Smothering Tithe"].includes(name) || name.includes("Signet") || name.includes("Bauble") || name.includes("Mox") || name.includes("Sword of")) {
+            type = "Artifact"; colors = [];
+        }
+        // Instants & Sorceries
+        else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality","Restore with Empathy","Gathering of Darkness","Tidings of War","Rage Into the Valley","Doom Foretold","Summon: Fenrir","Syphon Essence","Firja's Retribution","Vivien's Talent","Animist's Awakening","Glimmerburst","Walk with the Ancestors","Plasma Bolt","Surgical Precision","Tethermage's Advantage","No Admittance","Fulminous Forte","Cruel Calculations","Flourishing Grapple","Something Worth Saving","Artificer's Acumen","Vindicate's Triumph","Giant Growth","Ritual of Rejuvenation","Soul Salvage","Countersculpt","Extended Absence","Theorix Charm","Sphinx's Approach","Cyclonic Rift","Toxic Deluge","Damnation","Wrath of God","Blasphemous Act","Farewell","Heroic Intervention","Teferi's Protection","Force of Will","Counterspell"].includes(name) || name.includes("Touch") || name.includes("Strike") || name.includes("Burst") || name.includes("Vortex")) {
+            type = "Instant/Sorcery"; colors = [];
+        }
+
+        // Default Color Inference based on keywords
+        if (colors.length === 0 && type !== "Artifact" && type !== "Land") {
+            if (name.includes("Demon") || name.includes("Shadow") || name.includes("Dark") || name.includes("Grave") || name.includes("Blood") || name.includes("Orc") || name.includes("Thallid") || name.includes("Vampire")) colors.push("B");
+            if (name.includes("Elven") || name.includes("Forest") || name.includes("Hydra") || name.includes("Ent") || name.includes("Tree") || name.includes("Saproling")) colors.push("G");
+            if (name.includes("Angel") || name.includes("Holy") || name.includes("Light") || name.includes("Shield") || name.includes("Knight") || name.includes("Rohan")) colors.push("W");
+            if (name.includes("Flame") || name.includes("Ember") || name.includes("Goblin") || name.includes("Dragon") || name.includes("Inferno")) colors.push("R");
+            if (name.includes("Mage") || name.includes("Wave") || name.includes("Aether") || name.includes("Sphinx") || name.includes("Mind")) colors.push("U");
+        }
+
+        return { name: name, type: type, colors: colors, isLegend: false, arch: "General Pool" };
+    }
+
     function initApp() {
-        const list = window.FULL_MTG_CATALOG || [];
-        masterCatalog = list.map(name => {
-            const isLeg = !!legendsMap[name];
-            let cardType = isLeg ? legendsMap[name] : "Creature";
+        const rawList = window.FULL_MTG_CATALOG || [];
+        masterCatalog = rawList.map(name => determineCardDetails(name));
 
-            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town","Mirkwood"].includes(name)) {
-                cardType = "Land";
-            } else if (["Arcane Signet","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone","Thrór's Map"].includes(name)) {
-                cardType = "Artifact";
-            } else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality","Restore with Empathy","Gathering of Darkness","Tidings of War","Rage Into the Valley","Doom Foretold","Summon: Fenrir","Syphon Essence","Firja's Retribution","Vivien's Talent","Animist's Awakening","Glimmerburst","Walk with the Ancestors","Plasma Bolt","Surgical Precision","Tethermage's Advantage","No Admittance","Fulminous Forte","Cruel Calculations","Flourishing Grapple","Something Worth Saving","Artificer's Acumen","Vindicate's Triumph","Giant Growth","Ritual of Rejuvenation","Soul Salvage","Countersculpt","Extended Absence","Theorix Charm","Sphinx's Approach"].includes(name)) {
-                cardType = "Instant/Sorcery";
-            }
-
-            return { name: name, type: cardType, isLegend: isLeg };
-        });
+        document.getElementById("cardCounter").innerText = `${masterCatalog.length} Total Cards Vaulted`;
+        
+        const legendCount = masterCatalog.filter(c => c.isLegend).length;
+        document.getElementById("commanderCounter").innerText = `${legendCount} Commanders Ready`;
 
         populateCommanders();
         filterCollection();
@@ -256,101 +403,4 @@
         const dropdown = document.getElementById("commanderDropdown");
         dropdown.innerHTML = "";
 
-        const legends = masterCatalog.filter(c => c.isLegend);
-        legends.forEach(l => {
-            const opt = document.createElement("option");
-            opt.value = l.name;
-            opt.innerText = `${l.name} (${l.type})`;
-            dropdown.appendChild(opt);
-        });
-    }
-
-    function renderCollection(cards) {
-        const container = document.getElementById("cardContainer");
-        container.innerHTML = "";
-        document.getElementById("cardCounter").innerText = `${masterCatalog.length} Total Cards Indexed`;
-
-        cards.slice(0, 100).forEach(card => {
-            const cardEl = document.createElement("div");
-            cardEl.className = "card-item";
-            const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
-
-            cardEl.innerHTML = `
-                <img class="card-img" src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.src='https://cards.scryfall.io/back.png'">
-                <div class="card-info">
-                    <div class="card-title">${card.name}</div>
-                    <div class="card-type">${card.type}</div>
-                </div>
-            `;
-            container.appendChild(cardEl);
-        });
-    }
-
-    function filterCollection() {
-        const search = document.getElementById("searchInput").value.toLowerCase();
-        const type = document.getElementById("typeFilter").value;
-
-        const filtered = masterCatalog.filter(c => {
-            const matchSearch = c.name.toLowerCase().includes(search);
-            const matchType = type === "ALL" || (type === "Legendary" && c.isLegend) || c.type.includes(type);
-            return matchSearch && matchType;
-        });
-
-        renderCollection(filtered);
-    }
-
-    function switchTab(tabId, evt) {
-        document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
-        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
-        document.getElementById(tabId).classList.add("active");
-        evt.target.classList.add("active");
-    }
-
-    function buildDeckForCommander() {
-        const cmdName = document.getElementById("commanderDropdown").value;
-        const display = document.getElementById("deckDisplay");
-        display.style.display = "grid";
-
-        const pool = masterCatalog.filter(c => c.name !== cmdName);
-        const creatures = pool.filter(c => c.type === "Creature" || c.type === "Legendary Creature");
-        const spells = pool.filter(c => c.type === "Instant/Sorcery");
-        const artifacts = pool.filter(c => c.type === "Artifact");
-        const lands = pool.filter(c => c.type === "Land" && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
-
-        const selectedCreatures = creatures.slice(0, 30);
-        const selectedSpells = spells.slice(0, 16);
-        const selectedArtifacts = artifacts.slice(0, 10);
-        const selectedLands = lands.slice(0, 6);
-
-        const totalSelected = 1 + selectedCreatures.length + selectedSpells.length + selectedArtifacts.length + selectedLands.length;
-        const basicsNeeded = 100 - totalSelected;
-
-        display.innerHTML = `
-            <div class="deck-col">
-                <h3>Command Zone (1)</h3>
-                <ul><li><strong>1x ${cmdName}</strong></li></ul>
-                <h3>Owned Creatures (${selectedCreatures.length})</h3>
-                <ul>${selectedCreatures.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
-            </div>
-            <div class="deck-col">
-                <h3>Removal & Spells (${selectedSpells.length})</h3>
-                <ul>${selectedSpells.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
-                <h3>Ramp & Artifacts (${selectedArtifacts.length})</h3>
-                <ul>${selectedArtifacts.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
-            </div>
-            <div class="deck-col">
-                <h3>Lands & Mana (${selectedLands.length + basicsNeeded})</h3>
-                <ul>
-                    ${selectedLands.map(c => `<li>1x ${c.name}</li>`).join("")}
-                    <li>${Math.ceil(basicsNeeded * 0.5)}x Basic Swamps / Forests</li>
-                    <li>${Math.floor(basicsNeeded * 0.5)}x Basic Mountains / Plains / Islands</li>
-                </ul>
-            </div>
-        `;
-    }
-
-    window.onload = initApp;
-</script>
-
-</body>
-</html>
+        const legends = 
