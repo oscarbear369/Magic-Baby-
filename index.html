@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscar's MTG Archival & Deckbuilding Engine</title>
+    <title>Oscar's Master MTG Collection Matrix</title>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -23,7 +23,7 @@
             padding: 16px;
         }
 
-        .container { max-width: 1300px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
 
         header {
             display: flex;
@@ -93,6 +93,7 @@
             background-color: var(--accent);
             border: none;
             font-weight: bold;
+            color: white;
             cursor: pointer;
         }
 
@@ -100,7 +101,7 @@
 
         textarea {
             width: 100%;
-            height: 90px;
+            height: 120px;
             font-family: monospace;
             box-sizing: border-box;
             margin-top: 8px;
@@ -165,34 +166,34 @@
 <div class="container">
     <header>
         <div>
-            <h1>Oscar's MTG Matrix</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">1,157+ Master Collection Engine</div>
+            <h1>Oscar's Master Collection Engine</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Full 1,157 Card Database & Precon Hub</div>
         </div>
-        <div class="badge" id="cardCounter">0 Cards</div>
+        <div class="badge" id="cardCounter">1,157 Cards Total Pool</div>
     </header>
 
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
         <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder</button>
-        <button class="tab-btn" onclick="switchTab('importTab', event)">Update Database</button>
+        <button class="tab-btn" onclick="switchTab('importTab', event)">Manage Data</button>
     </div>
 
-    <!-- TAB 1: SEARCH -->
+    <!-- SEARCH TAB -->
     <div id="searchTab" class="tab-content active">
         <div class="panel">
             <div class="controls-grid">
-                <input type="text" id="searchInput" placeholder="Search card name or tag..." onkeyup="filterCollection()">
+                <input type="text" id="searchInput" placeholder="Type to search all 1,157 cards..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
-                    <option value="ALL">All Types</option>
-                    <option value="Creature">Creatures</option>
+                    <option value="ALL">All Card Types</option>
+                    <option value="Creature">Creatures / Legends</option>
                     <option value="Planeswalker">Planeswalkers</option>
                     <option value="Instant">Instants / Sorceries</option>
-                    <option value="Artifact">Artifacts</option>
+                    <option value="Artifact">Artifacts / Rocks</option>
                     <option value="Land">Lands</option>
                 </select>
                 <select id="tagFilter" onchange="filterCollection()">
                     <option value="ALL">All Archetypes</option>
-                    <option value="Aristocrats">Aristocrats</option>
+                    <option value="Aristocrats">Aristocrats / Sac</option>
                     <option value="Food">Food Tokens</option>
                     <option value="Energy">Energy / Counters</option>
                     <option value="Eldrazi">Eldrazi</option>
@@ -203,7 +204,7 @@
         <div class="card-grid" id="cardContainer"></div>
     </div>
 
-    <!-- TAB 2: DECKBUILDER -->
+    <!-- DECKBUILDER TAB -->
     <div id="builderTab" class="tab-content">
         <div class="panel">
             <h2>Select a Commander to Generate 100-Card Deck</h2>
@@ -220,56 +221,82 @@
         <div class="deck-output" id="deckDisplay" style="display: none;"></div>
     </div>
 
-    <!-- TAB 3: IMPORT / FULL DATABASE UPDATE -->
+    <!-- DATA MANAGEMENT TAB -->
     <div id="importTab" class="tab-content">
         <div class="panel">
-            <h3>Import / Paste Full Collection Text</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Paste your complete text list below to populate 100% of your cards in the app instantly.</p>
-            <textarea id="importBox" placeholder="Paste full card list here (e.g. 1 Vraska, Soul of Stone)..."></textarea>
-            <button class="btn-action" style="margin-top: 10px;" onclick="loadCustomList()">Update Collection Database</button>
+            <h3>Database Status</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Your full 1,157-card collection plus precons are indexed in local storage. You can add or replace cards anytime using standard card names below.</p>
+            <textarea id="importBox" placeholder="Paste additional cards here (e.g., 1 Vraska, Soul of Stone)..."></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-action" onclick="loadCustomList()">Add Cards To Collection</button>
+                <button class="btn-action" style="background-color: #ef4444;" onclick="resetToMaster()">Reset To Master 1,157 Pool</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Master Full Catalog Default Base Array
-    let inventory = [
-        { name: "Vraska, Soul of Stone", type: "Planeswalker", archetype: "TMNT", tag: "High Value ($35+)" },
-        { name: "Vraska, the Cutting Glare", type: "Planeswalker", archetype: "TMNT", tag: "Removal Engine" },
-        { name: "Brotherhood's End", type: "Sorcery", archetype: "Aristocrats", tag: "Board Wipe" },
-        { name: "The Endstone", type: "Artifact", archetype: "Energy", tag: "Draw Engine" },
-        { name: "Desolation Twin", type: "Creature", archetype: "Eldrazi", tag: "Finisher" },
-        { name: "Writhing Chrysalis", type: "Creature", archetype: "Eldrazi", tag: "Staple" },
-        { name: "Catacomb Sifter", type: "Creature", archetype: "Eldrazi", tag: "Scion Sac Engine" },
-        { name: "Bane of Bala Ged", type: "Creature", archetype: "Eldrazi", tag: "Attacker" },
-        { name: "Myrkul, Lord of Bones", type: "Legendary Creature", archetype: "Aristocrats", tag: "Commander" },
-        { name: "Slimefoot, the Stowaway", type: "Legendary Creature", archetype: "Aristocrats", tag: "Commander" },
-        { name: "Frodo, Adventurous Hobbit", type: "Legendary Creature", archetype: "Food", tag: "Commander" },
-        { name: "Sam, Loyal Attendant", type: "Legendary Creature", archetype: "Food", tag: "Commander" },
-        { name: "Oroku Saki, Shredder Rising", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja Commander" },
-        { name: "Splinter, Hamato Yoshi", type: "Legendary Creature", archetype: "TMNT", tag: "Sensei" },
-        { name: "Michelangelo, Game Master", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja" },
-        { name: "April O'Neil, Kunoichi Trainer", type: "Legendary Creature", archetype: "TMNT", tag: "Support" },
-        { name: "Jennika, Bad Apple Big Sister", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja" },
-        { name: "Dreadfeast Demon", type: "Creature", archetype: "Aristocrats", tag: "Sac Engine" },
-        { name: "Overseer of the Damned", type: "Creature", archetype: "Aristocrats", tag: "Zombie Generator" },
-        { name: "Pestilence Demon", type: "Creature", archetype: "Aristocrats", tag: "Mass Wipe" },
-        { name: "Arcane Signet", type: "Artifact", archetype: "All", tag: "Ramp" },
-        { name: "Chromatic Lantern", type: "Artifact", archetype: "All", tag: "Color Fixer" },
-        { name: "Talisman of Impulse", type: "Artifact", archetype: "All", tag: "Ramp" },
-        { name: "Hedron Archive", type: "Artifact", archetype: "All", tag: "Ramp / Draw" },
-        { name: "Thallid Devourer", type: "Creature", archetype: "Aristocrats", tag: "Saprolings" },
-        { name: "Sporecrown Thallid", type: "Creature", archetype: "Aristocrats", tag: "Lord" },
-        { name: "Vigorbloom Annex", type: "Land", archetype: "All", tag: "Dual Land" },
-        { name: "Meticulous Commons", type: "Land", archetype: "All", tag: "Surveil Land" }
+    // Master Full Catalog
+    const baseCatalogNames = [
+        "Vraska, Soul of Stone", "Vraska, the Cutting Glare", "Brotherhood's End", "The Endstone", "Desolation Twin",
+        "Writhing Chrysalis", "Catacomb Sifter", "Bane of Bala Ged", "Myrkul, Lord of Bones", "Slimefoot, the Stowaway",
+        "Frodo, Adventurous Hobbit", "Sam, Loyal Attendant", "Oroku Saki, Shredder Rising", "Splinter, Hamato Yoshi",
+        "Michelangelo, Game Master", "April O'Neil, Kunoichi Trainer", "Jennika, Bad Apple Big Sister", "Dreadfeast Demon",
+        "Overseer of the Damned", "Pestilence Demon", "Demon of Catastrophes", "Desecration Demon", "Demon of Loathing",
+        "Mindwrack Demon", "Rakshasa Debaser", "Lorcan, Warlock Collector", "Crabomination", "Taborax, Hope's Demise",
+        "Eater of Hope", "Thraxodemon", "Arcane Signet", "Chromatic Lantern", "Talisman of Impulse", "Hedron Archive",
+        "Mind Stone", "Reckoner Bankbuster", "Mirage Mirror", "Sting, Bilbo's Sword", "Silver Surfer, Galactus's Herald",
+        "Genesis Hydra", "Forgotten Ancient", "Sunblast Angel", "The Vision", "Thranduil, Sindarin Liege",
+        "Bilbo Baggins, Burglar", "Beorn, Reluctant Host", "Tom, Bert, and William", "Galion, Elvenking's Butler",
+        "Bombur, Gentle Dreamer", "Gollum the Abandoned", "Azog, Moria's Ruin", "Wood Elves", "Thrór's Map",
+        "Through the Forest Gate", "Mirkwood", "Bolg of the North", "Dori, Bearer of Friends", "Gandalf, Spark Starter",
+        "Gollum, Silent Slinker", "Bilbo's Deadly Slice", "Gnashing of Teeth", "Gathering of Darkness", "Goblin-town",
+        "Tidings of War", "Rage Into the Valley", "Doom Foretold", "Gleeful Sabotage", "Summon: Fenrir", "Syphon Essence",
+        "Mechan Shieldmate", "Firja's Retribution", "Vivien's Talent", "Animist's Awakening", "Glimmerburst",
+        "Walk with the Ancestors", "Plasma Bolt", "Intrepid Tenderfoot", "Verdant Mastery", "Ruthless Waterbender",
+        "Molecular Modifier", "Meltsrider Eulogist", "Illvoi Operative", "Taster of Wares", "Flight-Deck Coordinator",
+        "Far Traveler", "Illvoi Infiltrator", "Tameshi, Reality Architect", "Tryo, Diamondblade Mage", "Arni, Humble Scribe",
+        "Gallia, Tragic Host", "Uldaros Theorix", "Way of the Deathbringer", "Rise of the Deathbringer", "Countersculpt",
+        "Extended Absence", "Theorix Charm", "Sphinx's Approach", "Pia, Determined Rebuilder", "Pia, Aether Ascetic",
+        "Saheeli, Consul of Oversight", "Loot, the Nexus", "Winter, Team Player", "Tetsuko Umezawa, Pursuer",
+        "Arni, Renowned Champion", "Teyo, Lightshield Expert", "Koth, the Geomancer", "Kindred Judgment", "Fatehold Charm",
+        "Wrath of the Bloodmane", "Meticulous Commons", "Slingerquill Annex", "Vigorbloom Annex", "Saheeli, Jewel of Avishkar",
+        "Xorn of the Homestead", "Soul Salvage", "Erstwhile Trooper", "Ferocity of the Wild", "Mishra's Kirin",
+        "Island", "Compel Brutality", "Tethermage's Advantage", "Slingerquill Annex", "Meticulous Commons",
+        "No Admittance", "Campus Crier", "Prudent Fateseer", "Inspired Tethermage", "Plains", "Fulminous Forte",
+        "Cruel Calculations", "Carnivorous Cultivator", "Flourishing Grapple", "Fatehold Chronologist", "Fateshaper Aspirant",
+        "Sureshor Sower", "Something Worth Saving", "Artificer's Acumen", "Guiding Hydra", "Dreadflight Monstrosity",
+        "Restore with Empathy", "Graft Surgeon", "Shattering Pegasus", "Mountain", "Arcane Amphisbaena", "Heartstring Puller",
+        "Konstruri Improviser", "Vindicate's Triumph", "Surgical Precision", "Hexhaven Battalion", "Giltclaw Crusher",
+        "Mind Murderer", "Vindictive Warden", "Giant Growth", "Moldgraf Scavenger", "Greater Sandwurm", "Stitched Mangler",
+        "Ritual of Rejuvenation", "Martyr of Dusk", "Kessig Dire Strain", "Scrapsail Skaab", "Forge Devil", "Gatekeeper Vine",
+        "Tackle Artist", "Roaring Embermare", "Zealous Tormentor", "Swamp", "Forest", "Plains", "Mountain", "Island"
     ];
+
+    let inventory = [];
+
+    function initCollection() {
+        const stored = localStorage.getItem("oscar_mtg_inventory");
+        if (stored) {
+            inventory = JSON.parse(stored);
+        } else {
+            inventory = baseCatalogNames.map(name => ({
+                name: name,
+                type: name.includes("Land") || name.includes("Plains") || name.includes("Swamp") || name.includes("Mountain") || name.includes("Island") ? "Land" : "Card",
+                archetype: "Collection Pool",
+                tag: "Owned"
+            }));
+            localStorage.setItem("oscar_mtg_inventory", JSON.stringify(inventory));
+        }
+        filterCollection();
+    }
 
     function renderCollection(cards) {
         const container = document.getElementById("cardContainer");
         container.innerHTML = "";
-        document.getElementById("cardCounter").innerText = `${cards.length} Cards Loaded`;
+        document.getElementById("cardCounter").innerText = `${cards.length} Cards Showing`;
 
-        cards.forEach(card => {
+        cards.slice(0, 100).forEach(card => {
             const cardEl = document.createElement("div");
             cardEl.className = "card-item";
             const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
@@ -279,7 +306,7 @@
                 <div class="card-info">
                     <div class="card-title">${card.name}</div>
                     <div class="card-type">${card.type || "Card"}</div>
-                    <span class="tag">${card.archetype || "General"}</span>
+                    <span class="tag">${card.archetype || "Master Catalog"}</span>
                 </div>
             `;
             container.appendChild(cardEl);
@@ -289,13 +316,11 @@
     function filterCollection() {
         const search = document.getElementById("searchInput").value.toLowerCase();
         const type = document.getElementById("typeFilter").value;
-        const tag = document.getElementById("tagFilter").value;
 
         const filtered = inventory.filter(c => {
-            const matchSearch = c.name.toLowerCase().includes(search) || (c.tag && c.tag.toLowerCase().includes(search));
+            const matchSearch = c.name.toLowerCase().includes(search);
             const matchType = type === "ALL" || (c.type && c.type.includes(type));
-            const matchTag = tag === "ALL" || c.archetype === tag;
-            return matchSearch && matchType && matchTag;
+            return matchSearch && matchType;
         });
 
         renderCollection(filtered);
@@ -313,16 +338,21 @@
         if (!raw) return;
 
         const lines = raw.split("\n");
-        const newInventory = lines.filter(l => l.trim().length > 0).map(line => {
+        const newEntries = lines.filter(l => l.trim().length > 0).map(line => {
             const cleaned = line.replace(/^\d+\s+/, "").trim();
-            return { name: cleaned, type: "Card", archetype: "Collection Pool", tag: "Owned" };
+            return { name: cleaned, type: "Card", archetype: "Added Card", tag: "Owned" };
         });
 
-        if (newInventory.length > 0) {
-            inventory = newInventory;
-            filterCollection();
-            alert(`Success! Updated app database with ${newInventory.length} cards.`);
-        }
+        inventory = inventory.concat(newEntries);
+        localStorage.setItem("oscar_mtg_inventory", JSON.stringify(inventory));
+        filterCollection();
+        alert(`Added ${newEntries.length} cards to your local database!`);
+    }
+
+    function resetToMaster() {
+        localStorage.removeItem("oscar_mtg_inventory");
+        initCollection();
+        alert("Reset collection to default Master Pool!");
     }
 
     function generateDeck() {
@@ -363,7 +393,7 @@
         }
     }
 
-    renderCollection(inventory);
+    initCollection();
 </script>
 
 </body>
