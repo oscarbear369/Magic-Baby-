@@ -403,4 +403,11 @@
         const dropdown = document.getElementById("commanderDropdown");
         dropdown.innerHTML = "";
 
-        const legends = 
+        const legends = masterCatalog.filter(c => c.isLegend);
+        legends.forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = l.name;
+            const colorStr = l.colors.length > 0 ? l.colors.join("") : "Colorless";
+            opt.innerText = `${l.name} (${colorStr} • ${l.arch})`;
+            dropdown.appendChild(opt);
+        });
