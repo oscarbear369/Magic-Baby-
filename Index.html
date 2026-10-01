@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omniscience Archival Engine</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-panel: #151d30;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #1f293d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { max-width: 1300px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; color: var(--text-main); }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        .tab-btn {
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Controls & Inputs */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        input, select, button {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        button.btn-primary {
+            background: var(--accent);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.btn-primary:hover { background: var(--accent-hover); }
+
+        /* Cards Grid Layout */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .card-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+
+        .card-item:hover { transform: translateY(-4px); }
+
+        .card-img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            background: #1e293b;
+        }
+
+        .card-info { padding: 12px; }
+        .card-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
+        .card-type { font-size: 0.8rem; color: var(--text-muted); }
+
+        .tag {
+            display: inline-block;
+            background: var(--border);
+            color: #d1d5db;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 6px;
+        }
+
+        /* Deck Output Layout */
+        .deck-output {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .deck-column {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .deck-column h3 {
+            margin-top: 0;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .deck-list { list-style: none; padding: 0; margin: 0; }
+        .deck-list li { padding: 4px 0; font-size: 0.9rem; border-bottom: 1px solid #1a2438; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Omniscience Archival System</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Interactive Deckbuilder & Collection Matrix</div>
+        </div>
+        <div style="font-size: 0.9rem; font-weight: bold;" id="cardCountDisplay">0 Cards Loaded</div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
+        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deck Engine</button>
+    </div>
+
+    <!-- SEARCH TAB -->
+    <div id="searchTab" class="tab-content active">
+        <div class="panel">
+            <div class="controls-grid">
+                <input type="text" id="searchInput" placeholder="Search card name, type, or tag..." onkeyup="filterCollection()">
+                <select id="colorFilter" onchange="filterCollection()">
+                    <option value="ALL">All Colors</option>
+                    <option value="B">Black</option>
+                    <option value="G">Green</option>
+                    <option value="R">Red</option>
+                    <option value="U">Blue</option>
+                    <option value="W">White</option>
+                    <option value="C">Colorless / Eldrazi</option>
+                </select>
+                <select id="typeFilter" onchange="filterCollection()">
+                    <option value="ALL">All Types</option>
+                    <option value="Creature">Creature</option>
+                    <option value="Planeswalker">Planeswalker</option>
+                    <option value="Instant">Instant / Sorcery</option>
+                    <option value="Artifact">Artifact</option>
+                    <option value="Land">Land</option>
+                </select>
+                <select id="tagFilter" onchange="filterCollection()">
+                    <option value="ALL">All Archetypes</option>
+                    <option value="Aristocrats">Aristocrats</option>
+                    <option value="Food">Food Tokens</option>
+                    <option value="Energy">Energy / Counters</option>
+                    <option value="Eldrazi">Eldrazi</option>
+                    <option value="TMNT">TMNT / Ninjas</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card-grid" id="cardContainer"></div>
+    </div>
+
+    <!-- DECK BUILDER TAB -->
+    <div id="builderTab" class="tab-content">
+        <div class="panel">
+            <h2>Select a Commander to Deploy Deck</h2>
+            <div style="display: flex; gap: 12px; margin-top: 12px;">
+                <select id="commanderSelect" style="flex-grow: 1;">
+                    <option value="Myrkul">Myrkul, Lord of Bones (Abzan Indestructible Engine)</option>
+                    <option value="Slimefoot">Slimefoot, the Stowaway (Golgari Saprolings & Sacrifice)</option>
+                    <option value="FrodoSam">Frodo & Sam (Abzan Food Aristocrats)</option>
+                    <option value="Shredder">Oroku Saki, Shredder Rising (Black Combat Aggro)</option>
+                </select>
+                <button class="btn-primary" onclick="generateCommanderDeck()">Generate 100-Card Deck</button>
+            </div>
+        </div>
+
+        <div class="deck-output" id="deckDisplay" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    // Master Array
+    const inventory = [
+        { name: "Vraska, Soul of Stone", cmc: 6, colors: ["G", "B"], type: "Planeswalker", archetype: "TMNT", tag: "High Value" },
+        { name: "Brotherhood's End", cmc: 3, colors: ["R"], type: "Sorcery", archetype: "Aristocrats", tag: "Board Wipe" },
+        { name: "The Endstone", cmc: 5, colors: ["C"], type: "Artifact", archetype: "Energy", tag: "Draw Engine" },
+        { name: "Desolation Twin", cmc: 10, colors: ["C"], type: "Creature", archetype: "Eldrazi", tag: "Finisher" },
+        { name: "Writhing Chrysalis", cmc: 3, colors: ["C"], type: "Creature", archetype: "Eldrazi", tag: "Ramp" },
+        { name: "Catacomb Sifter", cmc: 3, colors: ["G", "B"], type: "Creature", archetype: "Eldrazi", tag: "Sac Engine" },
+        { name: "Myrkul, Lord of Bones", cmc: 7, colors: ["W", "B", "G"], type: "Creature", archetype: "Aristocrats", tag: "Commander" },
+        { name: "Slimefoot, the Stowaway", cmc: 3, colors: ["G", "B"], type: "Creature", archetype: "Aristocrats", tag: "Commander" },
+        { name: "Frodo, Adventurous Hobbit", cmc: 1, colors: ["W", "B", "G"], type: "Creature", archetype: "Food", tag: "Commander" },
+        { name: "Sam, Loyal Attendant", cmc: 3, colors: ["W", "B", "G"], type: "Creature", archetype: "Food", tag: "Commander" },
+        { name: "Oroku Saki, Shredder Rising", cmc: 4, colors: ["B"], type: "Creature", archetype: "TMNT", tag: "Commander" },
+        { name: "Dreadfeast Demon", cmc: 7, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Sac Engine" },
+        { name: "Overseer of the Damned", cmc: 7, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Zombie Engine" },
+        { name: "Pestilence Demon", cmc: 8, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Mass Wipe" },
+        { name: "Arcane Signet", cmc: 2, colors: ["C"], type: "Artifact", archetype: "All", tag: "Ramp" },
+        { name: "Chromatic Lantern", cmc: 3, colors: ["C"], type: "Artifact", archetype: "All", tag: "Fixing" },
+        { name: "Talisman of Impulse", cmc: 2, colors: ["C"], type: "Artifact", archetype: "All", tag: "Ramp" },
+        { name: "Thallid Devourer", cmc: 3, colors: ["G"], type: "Creature", archetype: "Aristocrats", tag: "Saprolings" },
+        { name: "Sporecrown Thallid", cmc: 2, colors: ["G"], type: "Creature", archetype: "Aristocrats", tag: "Lord" },
+        { name: "Vigorbloom Annex", cmc: 0, colors: ["G", "B"], type: "Land", archetype: "All", tag: "Dual Land" },
+        { name: "Meticulous Commons", cmc: 0, colors: ["W", "U"], type: "Land", archetype: "All", tag: "Surveil Land" }
+    ];
+
+    function renderCollection(cards) {
+        const container = document.getElementById("cardContainer");
+        container.innerHTML = "";
+        document.getElementById("cardCountDisplay").innerText = `${cards.length} Cards Displayed`;
+
+        cards.forEach(card => {
+            const cardEl = document.createElement("div");
+            cardEl.className = "card-item";
+            
+            // Dynamic Image via Scryfall API redirect
+            const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
+
+            cardEl.innerHTML = `
+                <img class="card-img" src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.src='https://cards.scryfall.io/back.png'">
+                <div class="card-info">
+                    <div class="card-title">${card.name}</div>
+                    <div class="card-type">${card.type} • CMC ${card.cmc}</div>
+                    <span class="tag">${card.archetype}</span>
+                </div>
+            `;
+            container.appendChild(cardEl);
+        });
+    }
+
+    function filterCollection() {
+        const search = document.getElementById("searchInput").value.toLowerCase();
+        const color = document.getElementById("colorFilter").value;
+        const type = document.getElementById("typeFilter").value;
+        const tag = document.getElementById("tagFilter").value;
+
+        const filtered = inventory.filter(c => {
+            const matchSearch = c.name.toLowerCase().includes(search) || c.type.toLowerCase().includes(search);
+            const matchColor = color === "ALL" || c.colors.includes(color);
+            const matchType = type === "ALL" || c.type.includes(type);
+            const matchTag = tag === "ALL" || c.archetype === tag;
+            return matchSearch && matchColor && matchType && matchTag;
+        });
+
+        renderCollection(filtered);
+    }
+
+    function switchTab(tabId, evt) {
+        document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+        evt.target.classList.add("active");
+    }
+
+    function generateCommanderDeck() {
+        const choice = document.getElementById("commanderSelect").value;
+        const display = document.getElementById("deckDisplay");
+        display.style.display = "grid";
+
+        if (choice === "Myrkul") {
+            display.innerHTML = `
+                <div class="deck-column">
+                    <h3>Command Zone (1)</h3>
+                    <ul class="deck-list"><li>1x Myrkul, Lord of Bones</li></ul>
+                    <h3>Immortal Engines (14)</h3>
+                    <ul class="deck-list">
+                        <li>1x Slimefoot, the Stowaway</li>
+                        <li>1x Dreadfeast Demon</li>
+                        <li>1x Overseer of the Damned</li>
+                        <li>1x Pestilence Demon</li>
+                    </ul>
+                </div>
+                <div class="deck-column">
+                    <h3>Food & Sac Outlets (12)</h3>
+                    <ul class="deck-list">
+                        <li>1x Sam, Loyal Attendant</li>
+                        <li>1x Frodo, Adventurous Hobbit</li>
+                        <li>1x Thraxodemon</li>
+                    </ul>
+                </div>
+                <div class="deck-column">
+                    <h3>Ramp & Control (18)</h3>
+                    <ul class="deck-list">
+                        <li>1x Brotherhood's End</li>
+                        <li>1x Arcane Signet</li>
+                        <li>1x Chromatic Lantern</li>
+                    </ul>
+                </div>
+            `;
+        }
+    }
+
+    renderCollection(inventory);
+</script>
+</body>
+</html>
