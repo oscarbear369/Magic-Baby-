@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omniscience Archival Engine</title>
+    <title>Oscar's MTG Archival & Deckbuilding Engine</title>
     <style>
         :root {
-            --bg-main: #0b0f19;
-            --bg-panel: #151d30;
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
             --accent: #8b5cf6;
             --accent-hover: #7c3aed;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border: #1f293d;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-main);
+            background-color: var(--bg-dark);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 16px;
         }
 
         .container { max-width: 1300px; margin: 0 auto; }
@@ -30,19 +30,28 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid var(--border);
-            padding-bottom: 15px;
+            padding-bottom: 16px;
             margin-bottom: 20px;
         }
 
-        h1 { margin: 0; font-size: 1.8rem; color: var(--text-main); }
+        h1 { margin: 0; font-size: 1.6rem; color: #f8fafc; }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .badge {
+            background-color: var(--accent);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 
         .tab-btn {
-            background: var(--bg-panel);
+            background: var(--panel-bg);
             color: var(--text-muted);
             border: 1px solid var(--border);
-            padding: 10px 18px;
+            padding: 10px 16px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
@@ -57,102 +66,98 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Controls & Inputs */
         .panel {
-            background: var(--bg-panel);
+            background-color: var(--panel-bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 16px;
             margin-bottom: 20px;
         }
 
         .controls-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
         }
 
-        input, select, button {
-            background: var(--bg-main);
+        input, select, textarea, button {
+            background-color: var(--bg-dark);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 10px 14px;
+            padding: 10px;
             border-radius: 6px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
-        button.btn-primary {
-            background: var(--accent);
+        .btn-action {
+            background-color: var(--accent);
             border: none;
             font-weight: bold;
             cursor: pointer;
         }
 
-        button.btn-primary:hover { background: var(--accent-hover); }
+        .btn-action:hover { background-color: var(--accent-hover); }
 
-        /* Cards Grid Layout */
+        textarea {
+            width: 100%;
+            height: 90px;
+            font-family: monospace;
+            box-sizing: border-box;
+            margin-top: 8px;
+        }
+
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
         }
 
         .card-item {
-            background: var(--bg-panel);
+            background-color: var(--panel-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s;
         }
-
-        .card-item:hover { transform: translateY(-4px); }
 
         .card-img {
             width: 100%;
-            height: 280px;
+            height: 250px;
             object-fit: cover;
             background: #1e293b;
         }
 
-        .card-info { padding: 12px; }
-        .card-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
+        .card-info { padding: 10px; }
+        .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
         .card-type { font-size: 0.8rem; color: var(--text-muted); }
 
         .tag {
             display: inline-block;
-            background: var(--border);
-            color: #d1d5db;
+            background-color: #334155;
+            color: #cbd5e1;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.75rem;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
-        /* Deck Output Layout */
         .deck-output {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
         }
 
-        .deck-column {
-            background: var(--bg-panel);
+        .deck-col {
+            background-color: var(--panel-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 16px;
+            padding: 14px;
         }
 
-        .deck-column h3 {
-            margin-top: 0;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
-
-        .deck-list { list-style: none; padding: 0; margin: 0; }
-        .deck-list li { padding: 4px 0; font-size: 0.9rem; border-bottom: 1px solid #1a2438; }
+        .deck-col h3 { margin-top: 0; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 4px 0; font-size: 0.85rem; border-bottom: 1px solid #26334d; }
     </style>
 </head>
 <body>
@@ -160,38 +165,30 @@
 <div class="container">
     <header>
         <div>
-            <h1>Omniscience Archival System</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Interactive Deckbuilder & Collection Matrix</div>
+            <h1>Oscar's MTG Matrix</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">1,157+ Master Collection Engine</div>
         </div>
-        <div style="font-size: 0.9rem; font-weight: bold;" id="cardCountDisplay">0 Cards Loaded</div>
+        <div class="badge" id="cardCounter">0 Cards</div>
     </header>
 
-    <div class="tabs">
+    <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
-        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deck Engine</button>
+        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder</button>
+        <button class="tab-btn" onclick="switchTab('importTab', event)">Update Database</button>
     </div>
 
-    <!-- SEARCH TAB -->
+    <!-- TAB 1: SEARCH -->
     <div id="searchTab" class="tab-content active">
         <div class="panel">
             <div class="controls-grid">
-                <input type="text" id="searchInput" placeholder="Search card name, type, or tag..." onkeyup="filterCollection()">
-                <select id="colorFilter" onchange="filterCollection()">
-                    <option value="ALL">All Colors</option>
-                    <option value="B">Black</option>
-                    <option value="G">Green</option>
-                    <option value="R">Red</option>
-                    <option value="U">Blue</option>
-                    <option value="W">White</option>
-                    <option value="C">Colorless / Eldrazi</option>
-                </select>
+                <input type="text" id="searchInput" placeholder="Search card name or tag..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
                     <option value="ALL">All Types</option>
-                    <option value="Creature">Creature</option>
-                    <option value="Planeswalker">Planeswalker</option>
-                    <option value="Instant">Instant / Sorcery</option>
-                    <option value="Artifact">Artifact</option>
-                    <option value="Land">Land</option>
+                    <option value="Creature">Creatures</option>
+                    <option value="Planeswalker">Planeswalkers</option>
+                    <option value="Instant">Instants / Sorceries</option>
+                    <option value="Artifact">Artifacts</option>
+                    <option value="Land">Lands</option>
                 </select>
                 <select id="tagFilter" onchange="filterCollection()">
                     <option value="ALL">All Archetypes</option>
@@ -203,73 +200,86 @@
                 </select>
             </div>
         </div>
-
         <div class="card-grid" id="cardContainer"></div>
     </div>
 
-    <!-- DECK BUILDER TAB -->
+    <!-- TAB 2: DECKBUILDER -->
     <div id="builderTab" class="tab-content">
         <div class="panel">
-            <h2>Select a Commander to Deploy Deck</h2>
-            <div style="display: flex; gap: 12px; margin-top: 12px;">
+            <h2>Select a Commander to Generate 100-Card Deck</h2>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <select id="commanderSelect" style="flex-grow: 1;">
                     <option value="Myrkul">Myrkul, Lord of Bones (Abzan Indestructible Engine)</option>
                     <option value="Slimefoot">Slimefoot, the Stowaway (Golgari Saprolings & Sacrifice)</option>
                     <option value="FrodoSam">Frodo & Sam (Abzan Food Aristocrats)</option>
                     <option value="Shredder">Oroku Saki, Shredder Rising (Black Combat Aggro)</option>
                 </select>
-                <button class="btn-primary" onclick="generateCommanderDeck()">Generate 100-Card Deck</button>
+                <button class="btn-action" onclick="generateDeck()">Deploy Deck</button>
             </div>
         </div>
-
         <div class="deck-output" id="deckDisplay" style="display: none;"></div>
+    </div>
+
+    <!-- TAB 3: IMPORT / FULL DATABASE UPDATE -->
+    <div id="importTab" class="tab-content">
+        <div class="panel">
+            <h3>Import / Paste Full Collection Text</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Paste your complete text list below to populate 100% of your cards in the app instantly.</p>
+            <textarea id="importBox" placeholder="Paste full card list here (e.g. 1 Vraska, Soul of Stone)..."></textarea>
+            <button class="btn-action" style="margin-top: 10px;" onclick="loadCustomList()">Update Collection Database</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // Master Array
-    const inventory = [
-        { name: "Vraska, Soul of Stone", cmc: 6, colors: ["G", "B"], type: "Planeswalker", archetype: "TMNT", tag: "High Value" },
-        { name: "Brotherhood's End", cmc: 3, colors: ["R"], type: "Sorcery", archetype: "Aristocrats", tag: "Board Wipe" },
-        { name: "The Endstone", cmc: 5, colors: ["C"], type: "Artifact", archetype: "Energy", tag: "Draw Engine" },
-        { name: "Desolation Twin", cmc: 10, colors: ["C"], type: "Creature", archetype: "Eldrazi", tag: "Finisher" },
-        { name: "Writhing Chrysalis", cmc: 3, colors: ["C"], type: "Creature", archetype: "Eldrazi", tag: "Ramp" },
-        { name: "Catacomb Sifter", cmc: 3, colors: ["G", "B"], type: "Creature", archetype: "Eldrazi", tag: "Sac Engine" },
-        { name: "Myrkul, Lord of Bones", cmc: 7, colors: ["W", "B", "G"], type: "Creature", archetype: "Aristocrats", tag: "Commander" },
-        { name: "Slimefoot, the Stowaway", cmc: 3, colors: ["G", "B"], type: "Creature", archetype: "Aristocrats", tag: "Commander" },
-        { name: "Frodo, Adventurous Hobbit", cmc: 1, colors: ["W", "B", "G"], type: "Creature", archetype: "Food", tag: "Commander" },
-        { name: "Sam, Loyal Attendant", cmc: 3, colors: ["W", "B", "G"], type: "Creature", archetype: "Food", tag: "Commander" },
-        { name: "Oroku Saki, Shredder Rising", cmc: 4, colors: ["B"], type: "Creature", archetype: "TMNT", tag: "Commander" },
-        { name: "Dreadfeast Demon", cmc: 7, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Sac Engine" },
-        { name: "Overseer of the Damned", cmc: 7, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Zombie Engine" },
-        { name: "Pestilence Demon", cmc: 8, colors: ["B"], type: "Creature", archetype: "Aristocrats", tag: "Mass Wipe" },
-        { name: "Arcane Signet", cmc: 2, colors: ["C"], type: "Artifact", archetype: "All", tag: "Ramp" },
-        { name: "Chromatic Lantern", cmc: 3, colors: ["C"], type: "Artifact", archetype: "All", tag: "Fixing" },
-        { name: "Talisman of Impulse", cmc: 2, colors: ["C"], type: "Artifact", archetype: "All", tag: "Ramp" },
-        { name: "Thallid Devourer", cmc: 3, colors: ["G"], type: "Creature", archetype: "Aristocrats", tag: "Saprolings" },
-        { name: "Sporecrown Thallid", cmc: 2, colors: ["G"], type: "Creature", archetype: "Aristocrats", tag: "Lord" },
-        { name: "Vigorbloom Annex", cmc: 0, colors: ["G", "B"], type: "Land", archetype: "All", tag: "Dual Land" },
-        { name: "Meticulous Commons", cmc: 0, colors: ["W", "U"], type: "Land", archetype: "All", tag: "Surveil Land" }
+    // Master Full Catalog Default Base Array
+    let inventory = [
+        { name: "Vraska, Soul of Stone", type: "Planeswalker", archetype: "TMNT", tag: "High Value ($35+)" },
+        { name: "Vraska, the Cutting Glare", type: "Planeswalker", archetype: "TMNT", tag: "Removal Engine" },
+        { name: "Brotherhood's End", type: "Sorcery", archetype: "Aristocrats", tag: "Board Wipe" },
+        { name: "The Endstone", type: "Artifact", archetype: "Energy", tag: "Draw Engine" },
+        { name: "Desolation Twin", type: "Creature", archetype: "Eldrazi", tag: "Finisher" },
+        { name: "Writhing Chrysalis", type: "Creature", archetype: "Eldrazi", tag: "Staple" },
+        { name: "Catacomb Sifter", type: "Creature", archetype: "Eldrazi", tag: "Scion Sac Engine" },
+        { name: "Bane of Bala Ged", type: "Creature", archetype: "Eldrazi", tag: "Attacker" },
+        { name: "Myrkul, Lord of Bones", type: "Legendary Creature", archetype: "Aristocrats", tag: "Commander" },
+        { name: "Slimefoot, the Stowaway", type: "Legendary Creature", archetype: "Aristocrats", tag: "Commander" },
+        { name: "Frodo, Adventurous Hobbit", type: "Legendary Creature", archetype: "Food", tag: "Commander" },
+        { name: "Sam, Loyal Attendant", type: "Legendary Creature", archetype: "Food", tag: "Commander" },
+        { name: "Oroku Saki, Shredder Rising", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja Commander" },
+        { name: "Splinter, Hamato Yoshi", type: "Legendary Creature", archetype: "TMNT", tag: "Sensei" },
+        { name: "Michelangelo, Game Master", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja" },
+        { name: "April O'Neil, Kunoichi Trainer", type: "Legendary Creature", archetype: "TMNT", tag: "Support" },
+        { name: "Jennika, Bad Apple Big Sister", type: "Legendary Creature", archetype: "TMNT", tag: "Ninja" },
+        { name: "Dreadfeast Demon", type: "Creature", archetype: "Aristocrats", tag: "Sac Engine" },
+        { name: "Overseer of the Damned", type: "Creature", archetype: "Aristocrats", tag: "Zombie Generator" },
+        { name: "Pestilence Demon", type: "Creature", archetype: "Aristocrats", tag: "Mass Wipe" },
+        { name: "Arcane Signet", type: "Artifact", archetype: "All", tag: "Ramp" },
+        { name: "Chromatic Lantern", type: "Artifact", archetype: "All", tag: "Color Fixer" },
+        { name: "Talisman of Impulse", type: "Artifact", archetype: "All", tag: "Ramp" },
+        { name: "Hedron Archive", type: "Artifact", archetype: "All", tag: "Ramp / Draw" },
+        { name: "Thallid Devourer", type: "Creature", archetype: "Aristocrats", tag: "Saprolings" },
+        { name: "Sporecrown Thallid", type: "Creature", archetype: "Aristocrats", tag: "Lord" },
+        { name: "Vigorbloom Annex", type: "Land", archetype: "All", tag: "Dual Land" },
+        { name: "Meticulous Commons", type: "Land", archetype: "All", tag: "Surveil Land" }
     ];
 
     function renderCollection(cards) {
         const container = document.getElementById("cardContainer");
         container.innerHTML = "";
-        document.getElementById("cardCountDisplay").innerText = `${cards.length} Cards Displayed`;
+        document.getElementById("cardCounter").innerText = `${cards.length} Cards Loaded`;
 
         cards.forEach(card => {
             const cardEl = document.createElement("div");
             cardEl.className = "card-item";
-            
-            // Dynamic Image via Scryfall API redirect
             const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
 
             cardEl.innerHTML = `
                 <img class="card-img" src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.src='https://cards.scryfall.io/back.png'">
                 <div class="card-info">
                     <div class="card-title">${card.name}</div>
-                    <div class="card-type">${card.type} • CMC ${card.cmc}</div>
-                    <span class="tag">${card.archetype}</span>
+                    <div class="card-type">${card.type || "Card"}</div>
+                    <span class="tag">${card.archetype || "General"}</span>
                 </div>
             `;
             container.appendChild(cardEl);
@@ -278,16 +288,14 @@
 
     function filterCollection() {
         const search = document.getElementById("searchInput").value.toLowerCase();
-        const color = document.getElementById("colorFilter").value;
         const type = document.getElementById("typeFilter").value;
         const tag = document.getElementById("tagFilter").value;
 
         const filtered = inventory.filter(c => {
-            const matchSearch = c.name.toLowerCase().includes(search) || c.type.toLowerCase().includes(search);
-            const matchColor = color === "ALL" || c.colors.includes(color);
-            const matchType = type === "ALL" || c.type.includes(type);
+            const matchSearch = c.name.toLowerCase().includes(search) || (c.tag && c.tag.toLowerCase().includes(search));
+            const matchType = type === "ALL" || (c.type && c.type.includes(type));
             const matchTag = tag === "ALL" || c.archetype === tag;
-            return matchSearch && matchColor && matchType && matchTag;
+            return matchSearch && matchType && matchTag;
         });
 
         renderCollection(filtered);
@@ -300,35 +308,52 @@
         evt.target.classList.add("active");
     }
 
-    function generateCommanderDeck() {
+    function loadCustomList() {
+        const raw = document.getElementById("importBox").value.trim();
+        if (!raw) return;
+
+        const lines = raw.split("\n");
+        const newInventory = lines.filter(l => l.trim().length > 0).map(line => {
+            const cleaned = line.replace(/^\d+\s+/, "").trim();
+            return { name: cleaned, type: "Card", archetype: "Collection Pool", tag: "Owned" };
+        });
+
+        if (newInventory.length > 0) {
+            inventory = newInventory;
+            filterCollection();
+            alert(`Success! Updated app database with ${newInventory.length} cards.`);
+        }
+    }
+
+    function generateDeck() {
         const choice = document.getElementById("commanderSelect").value;
         const display = document.getElementById("deckDisplay");
         display.style.display = "grid";
 
         if (choice === "Myrkul") {
             display.innerHTML = `
-                <div class="deck-column">
+                <div class="deck-col">
                     <h3>Command Zone (1)</h3>
-                    <ul class="deck-list"><li>1x Myrkul, Lord of Bones</li></ul>
+                    <ul><li>1x Myrkul, Lord of Bones</li></ul>
                     <h3>Immortal Engines (14)</h3>
-                    <ul class="deck-list">
+                    <ul>
                         <li>1x Slimefoot, the Stowaway</li>
                         <li>1x Dreadfeast Demon</li>
                         <li>1x Overseer of the Damned</li>
                         <li>1x Pestilence Demon</li>
                     </ul>
                 </div>
-                <div class="deck-column">
+                <div class="deck-col">
                     <h3>Food & Sac Outlets (12)</h3>
-                    <ul class="deck-list">
+                    <ul>
                         <li>1x Sam, Loyal Attendant</li>
                         <li>1x Frodo, Adventurous Hobbit</li>
                         <li>1x Thraxodemon</li>
                     </ul>
                 </div>
-                <div class="deck-column">
+                <div class="deck-col">
                     <h3>Ramp & Control (18)</h3>
-                    <ul class="deck-list">
+                    <ul>
                         <li>1x Brotherhood's End</li>
                         <li>1x Arcane Signet</li>
                         <li>1x Chromatic Lantern</li>
@@ -340,5 +365,6 @@
 
     renderCollection(inventory);
 </script>
+
 </body>
 </html>
