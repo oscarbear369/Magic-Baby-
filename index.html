@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscar's MTG Archival & Deckbuilding Hub</title>
+    <title>Oscar's MTG Archival Hub</title>
+    <script src="cards.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -80,7 +81,7 @@
             gap: 10px;
         }
 
-        input, select, textarea, button {
+        input, select, button {
             background-color: var(--bg-dark);
             border: 1px solid var(--border);
             color: #fff;
@@ -158,10 +159,10 @@
 <div class="container">
     <header>
         <div>
-            <h1>Oscar's MTG Master Matrix</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Full Collection & Smart Commander Engine</div>
+            <h1>Oscar's MTG Master Hub</h1>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Full Dynamic Collection & Commander Engine</div>
         </div>
-        <div class="badge" id="cardCounter">0 Cards</div>
+        <div class="badge" id="cardCounter">Loading Catalog...</div>
     </header>
 
     <div class="nav-tabs">
@@ -175,21 +176,12 @@
             <div class="controls-grid">
                 <input type="text" id="searchInput" placeholder="Search any card in your collection..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
-                    <option value="ALL">All Card Types</option>
+                    <option value="ALL">All Types</option>
                     <option value="Legendary">Legendary Commanders</option>
                     <option value="Creature">Creatures</option>
-                    <option value="Planeswalker">Planeswalkers</option>
                     <option value="Instant">Instants / Sorceries</option>
                     <option value="Artifact">Artifacts / Ramp</option>
                     <option value="Land">Lands</option>
-                </select>
-                <select id="tagFilter" onchange="filterCollection()">
-                    <option value="ALL">All Archetypes</option>
-                    <option value="Aristocrats">Aristocrats / Sac</option>
-                    <option value="Food">Food Tokens</option>
-                    <option value="Energy">Energy / Counters</option>
-                    <option value="Eldrazi">Eldrazi</option>
-                    <option value="TMNT">TMNT / Ninjas</option>
                 </select>
             </div>
         </div>
@@ -200,10 +192,9 @@
     <div id="builderTab" class="tab-content">
         <div class="panel">
             <h2>Select ANY Commander in Your Collection</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">The engine filters your 1,157+ card database to find cards matching your commander's color identity and archetype synergies, then auto-constructs a complete 100-card Commander deck.</p>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <select id="commanderDropdown" style="flex-grow: 1;"></select>
-                <button class="btn-action" onclick="buildSmartDeck()">Auto-Build Complete 100-Card Deck</button>
+                <button class="btn-action" onclick="buildDeckForCommander()">Auto-Build 100-Card Deck</button>
             </div>
         </div>
         <div class="deck-output" id="deckDisplay" style="display: none;"></div>
@@ -211,93 +202,61 @@
 </div>
 
 <script>
-    // Embedded Master Collection List
-    const rawCardNames = [
-        "Vraska, Soul of Stone", "Vraska, the Cutting Glare", "Brotherhood's End", "The Endstone", "Desolation Twin",
-        "Writhing Chrysalis", "Catacomb Sifter", "Bane of Bala Ged", "Myrkul, Lord of Bones", "Slimefoot, the Stowaway",
-        "Frodo, Adventurous Hobbit", "Sam, Loyal Attendant", "Oroku Saki, Shredder Rising", "Splinter, Hamato Yoshi",
-        "Michelangelo, Game Master", "April O'Neil, Kunoichi Trainer", "Jennika, Bad Apple Big Sister", "Dreadfeast Demon",
-        "Overseer of the Damned", "Pestilence Demon", "Demon of Catastrophes", "Desecration Demon", "Demon of Loathing",
-        "Mindwrack Demon", "Rakshasa Debaser", "Lorcan, Warlock Collector", "Crabomination", "Taborax, Hope's Demise",
-        "Eater of Hope", "Thraxodemon", "Arcane Signet", "Chromatic Lantern", "Talisman of Impulse", "Hedron Archive",
-        "Mind Stone", "Reckoner Bankbuster", "Mirage Mirror", "Sting, Bilbo's Sword", "Silver Surfer, Galactus's Herald",
-        "Genesis Hydra", "Forgotten Ancient", "Sunblast Angel", "The Vision", "Thranduil, Sindarin Liege",
-        "Bilbo Baggins, Burglar", "Beorn, Reluctant Host", "Tom, Bert, and William", "Galion, Elvenking's Butler",
-        "Bombur, Gentle Dreamer", "Gollum the Abandoned", "Azog, Moria's Ruin", "Wood Elves", "Thrór's Map",
-        "Through the Forest Gate", "Mirkwood", "Bolg of the North", "Dori, Bearer of Friends", "Gandalf, Spark Starter",
-        "Gollum, Silent Slinker", "Bilbo's Deadly Slice", "Gnashing of Teeth", "Gathering of Darkness", "Goblin-town",
-        "Tidings of War", "Rage Into the Valley", "Doom Foretold", "Gleeful Sabotage", "Summon: Fenrir", "Syphon Essence",
-        "Mechan Shieldmate", "Firja's Retribution", "Vivien's Talent", "Animist's Awakening", "Glimmerburst",
-        "Walk with the Ancestors", "Plasma Bolt", "Intrepid Tenderfoot", "Verdant Mastery", "Ruthless Waterbender",
-        "Molecular Modifier", "Meltsrider Eulogist", "Illvoi Operative", "Taster of Wares", "Flight-Deck Coordinator",
-        "Far Traveler", "Illvoi Infiltrator", "Tameshi, Reality Architect", "Tryo, Diamondblade Mage", "Arni, Humble Scribe",
-        "Gallia, Tragic Host", "Uldaros Theorix", "Way of the Deathbringer", "Rise of the Deathbringer", "Countersculpt",
-        "Extended Absence", "Theorix Charm", "Sphinx's Approach", "Pia, Determined Rebuilder", "Pia, Aether Ascetic",
-        "Saheeli, Consul of Oversight", "Loot, the Nexus", "Winter, Team Player", "Tetsuko Umezawa, Pursuer",
-        "Arni, Renowned Champion", "Teyo, Lightshield Expert", "Koth, the Geomancer", "Kindred Judgment", "Fatehold Charm",
-        "Wrath of the Bloodmane", "Meticulous Commons", "Slingerquill Annex", "Vigorbloom Annex", "Saheeli, Jewel of Avishkar",
-        "Xorn of the Homestead", "Soul Salvage", "Erstwhile Trooper", "Ferocity of the Wild", "Mishra's Kirin",
-        "Compel Brutality", "Tethermage's Advantage", "No Admittance", "Campus Crier", "Prudent Fateseer", "Inspired Tethermage",
-        "Fulminous Forte", "Cruel Calculations", "Carnivorous Cultivator", "Flourishing Grapple", "Fatehold Chronologist",
-        "Fateshaper Aspirant", "Sureshor Sower", "Something Worth Saving", "Artificer's Acumen", "Guiding Hydra",
-        "Dreadflight Monstrosity", "Restore with Empathy", "Graft Surgeon", "Shattering Pegasus", "Arcane Amphisbaena",
-        "Heartstring Puller", "Konstruri Improviser", "Vindicate's Triumph", "Surgical Precision", "Hexhaven Battalion",
-        "Giltclaw Crusher", "Mind Murderer", "Vindictive Warden", "Giant Growth", "Moldgraf Scavenger", "Greater Sandwurm",
-        "Stitched Mangler", "Ritual of Rejuvenation", "Martyr of Dusk", "Kessig Dire Strain", "Scrapsail Skaab", "Forge Devil",
-        "Gatekeeper Vine", "Tackle Artist", "Roaring Embermare", "Zealous Tormentor", "Swamp", "Forest", "Plains", "Mountain", "Island"
-    ];
+    let masterCatalog = [];
 
-    // Known Legends and Archetype Metadata
-    const legendsMetadata = {
-        "Myrkul, Lord of Bones": { isLegend: true, type: "Legendary Creature", archetype: "Aristocrats", colors: ["W","B","G"] },
-        "Slimefoot, the Stowaway": { isLegend: true, type: "Legendary Creature", archetype: "Aristocrats", colors: ["B","G"] },
-        "Frodo, Adventurous Hobbit": { isLegend: true, type: "Legendary Creature", archetype: "Food", colors: ["W","B","G"] },
-        "Sam, Loyal Attendant": { isLegend: true, type: "Legendary Creature", archetype: "Food", colors: ["W","B","G"] },
-        "Oroku Saki, Shredder Rising": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["B"] },
-        "Splinter, Hamato Yoshi": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["G"] },
-        "Michelangelo, Game Master": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["R"] },
-        "April O'Neil, Kunoichi Trainer": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["U"] },
-        "Jennika, Bad Apple Big Sister": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["B"] },
-        "Vraska, Soul of Stone": { isLegend: true, type: "Planeswalker", archetype: "TMNT", colors: ["B","G"] },
-        "Vraska, the Cutting Glare": { isLegend: true, type: "Planeswalker", archetype: "TMNT", colors: ["B","G"] },
-        "Pia, Determined Rebuilder": { isLegend: true, type: "Legendary Creature", archetype: "Energy", colors: ["R"] },
-        "Pia, Aether Ascetic": { isLegend: true, type: "Legendary Creature", archetype: "Energy", colors: ["G"] },
-        "Saheeli, Consul of Oversight": { isLegend: true, type: "Legendary Creature", archetype: "Energy", colors: ["U","R"] },
-        "Loot, the Nexus": { isLegend: true, type: "Legendary Creature", archetype: "All", colors: ["G","U","R"] },
-        "Winter, Team Player": { isLegend: true, type: "Legendary Creature", archetype: "Aristocrats", colors: ["B","R"] },
-        "Tetsuko Umezawa, Pursuer": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["U"] },
-        "Arni, Renowned Champion": { isLegend: true, type: "Legendary Creature", archetype: "TMNT", colors: ["R"] },
-        "Teyo, Lightshield Expert": { isLegend: true, type: "Legendary Creature", archetype: "All", colors: ["W"] },
-        "Koth, the Geomancer": { isLegend: true, type: "Planeswalker", archetype: "All", colors: ["R"] }
+    const legendsMap = {
+        "Myrkul, Lord of Bones": "Legendary Creature",
+        "Slimefoot, the Stowaway": "Legendary Creature",
+        "Frodo, Adventurous Hobbit": "Legendary Creature",
+        "Sam, Loyal Attendant": "Legendary Creature",
+        "Oroku Saki, Shredder Rising": "Legendary Creature",
+        "Splinter, Hamato Yoshi": "Legendary Creature",
+        "Michelangelo, Game Master": "Legendary Creature",
+        "April O'Neil, Kunoichi Trainer": "Legendary Creature",
+        "Jennika, Bad Apple Big Sister": "Legendary Creature",
+        "Vraska, Soul of Stone": "Planeswalker",
+        "Vraska, the Cutting Glare": "Planeswalker",
+        "Pia, Determined Rebuilder": "Legendary Creature",
+        "Pia, Aether Ascetic": "Legendary Creature",
+        "Saheeli, Consul of Oversight": "Legendary Creature",
+        "Loot, the Nexus": "Legendary Creature",
+        "Winter, Team Player": "Legendary Creature",
+        "Tetsuko Umezawa, Pursuer": "Legendary Creature",
+        "Arni, Renowned Champion": "Legendary Creature",
+        "Teyo, Lightshield Expert": "Legendary Creature",
+        "Koth, the Geomancer": "Planeswalker"
     };
 
-    // Auto-generate master array
-    const masterCatalog = rawCardNames.map(name => {
-        if (legendsMetadata[name]) {
-            return { name: name, ...legendsMetadata[name] };
-        }
-        let cardType = "Creature";
-        let cardArch = "General Pool";
-        if (name.includes("Land") || ["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town"].includes(name)) cardType = "Land";
-        else if (["Arcane Signet","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone"].includes(name)) cardType = "Artifact";
-        else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality","Restore with Empathy"].includes(name)) cardType = "Instant/Sorcery";
+    function initApp() {
+        const list = window.FULL_MTG_CATALOG || [];
+        masterCatalog = list.map(name => {
+            const isLeg = !!legendsMap[name];
+            let cardType = isLeg ? legendsMap[name] : "Creature";
 
-        if (["Desolation Twin","Writhing Chrysalis","Catacomb Sifter","Bane of Bala Ged"].includes(name)) cardArch = "Eldrazi";
-        else if (["Dreadfeast Demon","Overseer of the Damned","Pestilence Demon","Thallid Devourer","Sporecrown Thallid","Deathbloom Thallid","Tukatongue Thallid","Thraxodemon","Eater of Hope","Graft Surgeon"].includes(name)) cardArch = "Aristocrats";
-        else if (["Frodo, Adventurous Hobbit","Sam, Loyal Attendant","Thranduil, Sindarin Liege","Bilbo Baggins, Burglar","Beorn, Reluctant Host","Gollum, Silent Slinker"].includes(name)) cardArch = "Food";
+            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town"].includes(name)) {
+                cardType = "Land";
+            } else if (["Arcane Signet","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone"].includes(name)) {
+                cardType = "Artifact";
+            } else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality"].includes(name)) {
+                cardType = "Instant/Sorcery";
+            }
 
-        return { name: name, type: cardType, archetype: cardArch, isLegend: false };
-    });
+            return { name: name, type: cardType, isLegend: isLeg };
+        });
+
+        populateCommanders();
+        filterCollection();
+    }
 
     function populateCommanders() {
         const dropdown = document.getElementById("commanderDropdown");
         dropdown.innerHTML = "";
-        
+
         const legends = masterCatalog.filter(c => c.isLegend);
-        legends.forEach(legend => {
+        legends.forEach(l => {
             const opt = document.createElement("option");
-            opt.value = legend.name;
-            opt.innerText = `${legend.name} (${legend.type} • ${legend.archetype})`;
+            opt.value = l.name;
+            opt.innerText = `${l.name} (${l.type})`;
             dropdown.appendChild(opt);
         });
     }
@@ -305,7 +264,7 @@
     function renderCollection(cards) {
         const container = document.getElementById("cardContainer");
         container.innerHTML = "";
-        document.getElementById("cardCounter").innerText = `${masterCatalog.length} Cards Indexed`;
+        document.getElementById("cardCounter").innerText = `${masterCatalog.length} Total Cards Indexed`;
 
         cards.slice(0, 100).forEach(card => {
             const cardEl = document.createElement("div");
@@ -317,7 +276,6 @@
                 <div class="card-info">
                     <div class="card-title">${card.name}</div>
                     <div class="card-type">${card.type}</div>
-                    <span class="tag">${card.archetype}</span>
                 </div>
             `;
             container.appendChild(cardEl);
@@ -327,13 +285,11 @@
     function filterCollection() {
         const search = document.getElementById("searchInput").value.toLowerCase();
         const type = document.getElementById("typeFilter").value;
-        const tag = document.getElementById("tagFilter").value;
 
         const filtered = masterCatalog.filter(c => {
             const matchSearch = c.name.toLowerCase().includes(search);
             const matchType = type === "ALL" || (type === "Legendary" && c.isLegend) || c.type.includes(type);
-            const matchTag = tag === "ALL" || c.archetype === tag;
-            return matchSearch && matchType && matchTag;
+            return matchSearch && matchType;
         });
 
         renderCollection(filtered);
@@ -346,46 +302,51 @@
         evt.target.classList.add("active");
     }
 
-    function buildSmartDeck() {
+    function buildDeckForCommander() {
         const cmdName = document.getElementById("commanderDropdown").value;
-        const commander = masterCatalog.find(c => c.name === cmdName);
         const display = document.getElementById("deckDisplay");
         display.style.display = "grid";
 
-        // Filter valid cards matching Commander or General Archetype
-        const validPool = masterCatalog.filter(c => c.name !== cmdName);
-        const creatures = validPool.filter(c => c.type === "Creature" || c.type === "Legendary Creature");
-        const spells = validPool.filter(c => c.type === "Instant/Sorcery");
-        const artifacts = validPool.filter(c => c.type === "Artifact");
-        const nonBasicLands = validPool.filter(c => c.type === "Land" && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
+        const pool = masterCatalog.filter(c => c.name !== cmdName);
+        const creatures = pool.filter(c => c.type === "Creature" || c.type === "Legendary Creature");
+        const spells = pool.filter(c => c.type === "Instant/Sorcery");
+        const artifacts = pool.filter(c => c.type === "Artifact");
+        const lands = pool.filter(c => c.type === "Land" && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
 
-        // Build 100-card ratios
-        const selectedCreatures = creatures.slice(0, 32);
-        const selectedSpells = spells.slice(0, 18);
-        const selectedArtifacts = artifacts.slice(0, 12);
-        const selectedLands = nonBasicLands.slice(0, 6);
+        const selectedCreatures = creatures.slice(0, 30);
+        const selectedSpells = spells.slice(0, 16);
+        const selectedArtifacts = artifacts.slice(0, 10);
+        const selectedLands = lands.slice(0, 6);
 
-        // Basic land fill to reach exactly 100
-        const totalNonLand = 1 + selectedCreatures.length + selectedSpells.length + selectedArtifacts.length + selectedLands.length;
-        const basicLandNeeded = 100 - totalNonLand;
+        const totalSelected = 1 + selectedCreatures.length + selectedSpells.length + selectedArtifacts.length + selectedLands.length;
+        const basicsNeeded = 100 - totalSelected;
 
         display.innerHTML = `
             <div class="deck-col">
                 <h3>Command Zone (1)</h3>
-                <ul><li><strong>1x ${commander.name}</strong></li></ul>
-                <h3>Synergy Creatures (${selectedCreatures.length})</h3>
-                <ul>
-                    ${selectedCreatures.map(c => `<li>1x ${c.name}</li>`).join("")}
-                </ul>
+                <ul><li><strong>1x ${cmdName}</strong></li></ul>
+                <h3>Owned Creatures (${selectedCreatures.length})</h3>
+                <ul>${selectedCreatures.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
             </div>
             <div class="deck-col">
                 <h3>Removal & Spells (${selectedSpells.length})</h3>
+                <ul>${selectedSpells.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <h3>Ramp & Artifacts (${selectedArtifacts.length})</h3>
+                <ul>${selectedArtifacts.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+            </div>
+            <div class="deck-col">
+                <h3>Lands & Mana (${selectedLands.length + basicsNeeded})</h3>
                 <ul>
-                    ${selectedSpells.map(c => `<li>1x ${c.name}</li>`).join("")}
-                </ul>
-                <h3>Artifacts & Ramp (${selectedArtifacts.length})</h3>
-                <ul>
-                    ${selectedArtifacts.map(c => `<li>1x ${c.name}</li>`).join("")}
+                    ${selectedLands.map(c => `<li>1x ${c.name}</li>`).join("")}
+                    <li>${Math.ceil(basicsNeeded * 0.5)}x Basic Swamps / Forests</li>
+                    <li>${Math.floor(basicsNeeded * 0.5)}x Basic Mountains / Plains / Islands</li>
                 </ul>
             </div>
-            <div class="deck-col"
+        `;
+    }
+
+    window.onload = initApp;
+</script>
+
+</body>
+</html>
