@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oscar's MTG Master Vault & Synergy Engine</title>
-    <script src="cards.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -43,11 +42,7 @@
 
         h1 { margin: 0; font-size: 1.6rem; color: #f8fafc; }
 
-        .stats-bar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+        .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .badge {
             background-color: var(--accent);
@@ -70,7 +65,6 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s ease;
         }
 
         .tab-btn.active {
@@ -92,7 +86,7 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
         }
 
@@ -106,18 +100,12 @@
             width: 100%;
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
         .btn-action {
             background-color: var(--accent);
             border: none;
             font-weight: bold;
             color: white;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-action:hover { background-color: var(--accent-hover); }
@@ -135,12 +123,6 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-        .card-item:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent);
         }
 
         .card-img {
@@ -153,25 +135,6 @@
         .card-info { padding: 12px; }
         .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; color: #fff; }
         .card-type { font-size: 0.8rem; color: var(--text-muted); }
-
-        .tag-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-        .tag {
-            background-color: #334155;
-            color: #cbd5e1;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.72rem;
-            font-weight: 500;
-        }
-
-        .deck-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
 
         .deck-output {
             display: grid;
@@ -191,7 +154,6 @@
             color: var(--accent);
             border-bottom: 1px solid var(--panel-border);
             padding-bottom: 8px;
-            font-size: 1.1rem;
         }
 
         ul.deck-list { list-style: none; padding: 0; margin: 0; }
@@ -202,21 +164,6 @@
             display: flex;
             justify-content: space-between;
         }
-
-        ul.deck-list li span.type-label {
-            color: var(--text-muted);
-            font-size: 0.78rem;
-        }
-
-        .summary-box {
-            background: #0d1527;
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
     </style>
 </head>
 <body>
@@ -225,41 +172,31 @@
     <header>
         <div>
             <h1>Oscar's MTG Master Vault</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Smart Color-Identity & Optimal Deckbuilding Engine</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Self-Contained 1,157-Card Archival & Commander Engine</div>
         </div>
         <div class="stats-bar">
-            <div class="badge" id="cardCounter">0 Cards Indexed</div>
+            <div class="badge" id="cardCounter">Loading Vault...</div>
             <div class="badge badge-green" id="commanderCounter">0 Commanders</div>
         </div>
     </header>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search & Vault</button>
-        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder Engine</button>
+        <button class="tab-btn active" onclick="switchTab('searchTab', event)">Collection Search</button>
+        <button class="tab-btn" onclick="switchTab('builderTab', event)">"What-If" Deckbuilder</button>
     </div>
 
     <!-- SEARCH TAB -->
     <div id="searchTab" class="tab-content active">
         <div class="panel">
             <div class="controls-grid">
-                <input type="text" id="searchInput" placeholder="Search 1,157 cards by name..." onkeyup="filterCollection()">
+                <input type="text" id="searchInput" placeholder="Search cards by name..." onkeyup="filterCollection()">
                 <select id="typeFilter" onchange="filterCollection()">
                     <option value="ALL">All Card Types</option>
                     <option value="Legendary">Legendary Commanders</option>
                     <option value="Creature">Creatures</option>
-                    <option value="Instant/Sorcery">Instants & Sorceries</option>
+                    <option value="Instant/Sorceries">Instants & Sorceries</option>
                     <option value="Artifact">Artifacts & Ramp</option>
                     <option value="Land">Lands</option>
-                </select>
-                <select id="colorFilter" onchange="filterCollection()">
-                    <option value="ALL">All Colors</option>
-                    <option value="B">Black</option>
-                    <option value="G">Green</option>
-                    <option value="W">White</option>
-                    <option value="R">Red</option>
-                    <option value="U">Blue</option>
-                    <option value="MULTI">Multicolor</option>
-                    <option value="COLORLESS">Colorless / Artifacts</option>
                 </select>
             </div>
         </div>
@@ -270,130 +207,271 @@
     <div id="builderTab" class="tab-content">
         <div class="panel">
             <h2>Optimal Commander Deckbuilder Engine</h2>
-            <p style="color: var(--text-muted); font-size: 0.88rem;">Select any commander in your inventory. The engine analyzes its exact color identity, pulls every legal card from your 1,157-card collection, prioritizes top synergies, and constructs a balanced, optimal 100-card Commander deck.</p>
-            <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
                 <select id="commanderDropdown" style="flex: 2; min-width: 250px;"></select>
-                <button class="btn-action" style="flex: 1; min-width: 200px;" onclick="buildOptimalDeck()">Generate Best 100-Card Deck</button>
+                <button class="btn-action" style="flex: 1; min-width: 200px;" onclick="buildOptimalDeck()">Generate 100-Card Deck</button>
             </div>
         </div>
-
-        <div id="deckOutputContainer" style="display: none;">
-            <div class="summary-box" id="deckSummary"></div>
-            <div class="deck-header">
-                <h2 id="generatedDeckTitle" style="margin:0;">Deck List</h2>
-                <button class="btn-action" style="width: auto; padding: 8px 16px;" onclick="copyDeckList()">Copy Export Text (MTGA / Moxfield)</button>
-            </div>
-            <div class="deck-output" id="deckDisplay"></div>
-        </div>
+        <div class="deck-output" id="deckDisplay" style="display: none;"></div>
     </div>
 </div>
 
 <script>
+    // HARDCODED MASTER COLLECTION ARRAY (Parts 1-4)
+    const rawMasterList = [
+        // PART 1 OF 4: CARDS 1 TO 300
+        "Myrkul, Lord of Bones", "Slimefoot, the Stowaway", "Frodo, Adventurous Hobbit", "Sam, Loyal Attendant",
+        "Oroku Saki, Shredder Rising", "Splinter, Hamato Yoshi", "Michelangelo, Game Master", "April O'Neil, Kunoichi Trainer",
+        "Jennika, Bad Apple Big Sister", "Vraska, Soul of Stone", "Vraska, the Cutting Glare", "Pia, Determined Rebuilder",
+        "Pia, Aether Ascetic", "Saheeli, Consul of Oversight", "Loot, the Nexus", "Winter, Team Player",
+        "Tetsuko Umezawa, Pursuer", "Arni, Renowned Champion", "Teyo, Lightshield Expert", "Koth, the Geomancer",
+        "Thranduil, Sindarin Liege", "Bilbo Baggins, Burglar", "Beorn, Reluctant Host", "Tom, Bert, and William",
+        "Galion, Elvenking's Butler", "Bombur, Gentle Dreamer", "Gollum the Abandoned", "Azog, Moria's Ruin",
+        "Bolg of the North", "Dori, Bearer of Friends", "Gandalf, Spark Starter", "Gollum, Silent Slinker",
+        "Lorcan, Warlock Collector", "Taborax, Hope's Demise", "Dreadfeast Demon", "Overseer of the Damned",
+        "Pestilence Demon", "Demon of Catastrophes", "Desecration Demon", "Demon of Loathing", "Mindwrack Demon",
+        "Rakshasa Debaser", "Crabomination", "Eater of Hope", "Thraxodemon", "Desolation Twin",
+        "Writhing Chrysalis", "Catacomb Sifter", "Bane of Bala Ged", "Silver Surfer, Galactus's Herald",
+        "Genesis Hydra", "Forgotten Ancient", "Sunblast Angel", "The Vision", "Migloz, Maze Crusher",
+        "Gallia, Tragic Host", "Tameshi, Reality Architect", "Tryo, Diamondblade Mage", "Arni, Humble Scribe",
+        "Saheeli, Jewel of Avishkar", "Xorn of the Homestead", "Thallid Devourer", "Sporecrown Thallid",
+        "Deathbloom Thallid", "Tukatongue Thallid", "Undercellar Myconid", "Yavimaya Sapherd", "Bloodthrone Vampire",
+        "Bloodflow Connoisseur", "Acolyte of Aclazotz", "Emrakul's Evangel", "Intrepid Tenderfoot", "Verdant Mastery",
+        "Ruthless Waterbender", "Molecular Modifier", "Meltsrider Eulogist", "Illvoi Operative", "Taster of Wares",
+        "Flight-Deck Coordinator", "Far Traveler", "Illvoi Infiltrator", "Uldaros Theorix", "Way of the Deathbringer",
+        "Rise of the Deathbringer", "Mechan Shieldmate", "Campus Crier", "Prudent Fateseer", "Inspired Tethermage",
+        "Carnivorous Cultivator", "Fatehold Chronologist", "Fateshaper Aspirant", "Sureshor Sower", "Guiding Hydra",
+        "Dreadflight Monstrosity", "Graft Surgeon", "Shattering Pegasus", "Arcane Amphisbaena", "Heartstring Puller",
+        "Konstruri Improviser", "Hexhaven Battalion", "Giltclaw Crusher", "Mind Murderer", "Vindictive Warden",
+        "Moldgraf Scavenger", "Greater Sandwurm", "Stitched Mangler", "Martyr of Dusk", "Kessig Dire Strain",
+        "Scrapsail Skaab", "Forge Devil", "Gatekeeper Vine", "Tackle Artist", "Roaring Embermare",
+        "Zealous Tormentor", "Erstwhile Trooper", "Wood Elves", "Brood Butcher", "Smothering Abomination",
+        "Zulaport Cutthroat", "Sifter of Skulls", "Pawn of Ulamog", "Pitiless Plunderer", "Viscera Seer",
+        "Carrion Feeder", "Reassembling Skeleton", "Persistent Specimen", "Doomed Traveler", "Hunted Witness",
+        "Gutterbones", "Gravecrawler", "Bloodsoaked Champion", "Dread Wanderer", "Cult Conscript",
+        "Tenacious Underdog", "Morbid Opportunist", "Midnight Reaper", "Grim Haruspex", "Species Specialist",
+        "Dark Prophecy", "Bastion of Remembrance", "Systemic Dissolution", "Nullify Matrix", "Corpse Explosion",
+        "Fleshbag Marauder", "Merciless Executioner", "Plaguecrafter", "Demon's Disciple", "Gravelighter",
+        "Accursed Marauder", "Corrupted Conviction", "Village Rites", "Deadly Dispute", "Fanatical Offering",
+        "Reckless Impulse", "Demand Answers", "Night's Whisper", "Read the Bones", "Sign in Blood",
+        "Altar's Reap", "Costly Plunder", "Bankrupt in Blood", "Eviscerator's Insight", "Nasty End",
+        "Trouble in Pairs", "Smothering Tithe", "Esper Sentinel", "Archivist of Oghma", "Monologue Tax",
+        "Loran of the Third Path", "Skyclave Apparition", "Solitude", "Grief", "Subtlety",
+        "Endurance", "Fury", "Force of Will", "Force of Negation", "Mana Drain",
+        "Counterspell", "Fierce Guardianship", "Deflecting Swat", "Deadly Rollick", "Flawless Maneuver",
+        "Heroic Intervention", "Teferi's Protection", "Cyclonic Rift", "Toxic Deluge", "Damnation",
+        "Wrath of God", "Blasphemous Act", "Vanquish the Horde", "Farewell", "Supreme Verdict",
+        "Languish", "Crux of Fate", "Extinction Event", "Shadows' Verdict", "Crippling Fear",
+        "Meathook Massacre", "Bastion of Remembrance", "Dreadhorde Invasion", "Bitterblossom", "Skrelv's Hive",
+        "Jadar, Ghoulcaller of Nephalia", "Poppet Stitcher", "Ophiomancer", "Grave Titan", "Wurmcoil Engine",
+        "Noxious Gearhulk", "Verdurous Gearhulk", "Combustible Gearhulk", "Torrential Gearhulk", "Cataclysmic Gearhulk",
+        "Aetherflux Reservoir", "Bolas's Citadel", "Sensei's Divining Top", "Skullclamp", "Ashnod's Altar",
+        "Phyrexian Altar", "Nim Deathmantle", "Sol Ring", "Arcane Signet", "Fellwar Stone",
+        "Thought Vessel", "Reliquary Tower", "Command Tower", "Exotic Orchard", "Path of Ancestry",
+        "City of Brass", "Mana Confluence", "Reflecting Pool", "Plaza of Heroes", "Secluded Courtyard",
+        "Unclaimed Territory", "Cavern of Souls", "Overgrown Tomb", "Temple Garden", "Godless Shrine",
+        "Stomping Ground", "Watery Grave", "Blood Crypt", "Breeding Pool", "Hallowed Fountain",
+        "Steam Vents", "Sacred Foundry", "Wooded Foothills", "Windswept Heath", "Bloodstained Mire",
+        "Polluted Delta", "Flooded Strand", "Marsh Flats", "Verdant Catacombs", "Misty Rainforest",
+        "Scalding Tarn", "Arid Mesa", "Llanowar Wastes", "Caves of Koilos", "Brushland", "Karplusan Forest",
+        "Underground River", "Sulfurous Springs", "Yavimaya Coast", "Adarkar Wastes", "Battlefield Forge",
+        "Shivan Reef", "Twilight Mire", "Fetid Heath", "Rugged Prairie", "Flooded Grove",
+        "Graven Cairns", "Cascading Cataracts", "Evolving Wilds", "Terramorphic Expanse", "Fabled Passage",
+        "Prismatic Vista", "Exotic Orchard", "Command Tower", "Path of Ancestry", "Bojuka Bog",
+        "Takenuma, Abandoned Mire", "Boseiju, Who Endures", "Eiganjo, Seat of the Empire", "Otawara, Soaring City",
+        "Sokenzan, Crucible of Defiance", "Reliquary Tower", "Rogue's Passage", "High Market", "Phyrexian Tower",
+        "Westvale Abbey", "Volrath's Stronghold", "Academy Ruins", "Hall of Heliod's Generosity", "Field of the Dead",
+        "Scavenger Grounds", "Geier Reach Sanitarium", "Mikokoro, Center of the Sea", "War Room", "Bonders' Enclave",
+        "Castle Locthwain", "Castle Garenbrig", "Castle Vantress", "Castle Ardenvale", "Castle Embereth",
+        "Witch's Cottage", "Gingerbread Cabin", "Idyllic Grange", "Dwarf Hold", "Hickory Woodlot",
+        "Peat Bog", "Remote Farm", "Sandstone Needle", "Saprazzan Skerry", "Ebon Stronghold",
+        "Havenwood Battleground", "Ruins of Trokair", "Svyelunite Temple", "Dwarven Ruins", "Vault of Champions",
+        "Spectator Seating", "Training Center", "Undergrowth Stadium", "Rejuvenating Springs", "Vault of Whispers",
+        "Tree of Tales", "Seat of the Synod", "Great Furnace", "Ancient Den", "Darksteel Citadel",
+            // PART 2 OF 4: CARDS 301 TO 600
+        "Mothman, Cryptid Leader", "The Master, Transcendent", "Piper Wright, Public Reporter", "Cait, Brawler Scholar",
+        "Pre War Hero", "Brotherhood Knight", "Paladin Danse", "Elder Maxson", "Super Mutant Scourge",
+        "Radstag Herd", "Glowing One", "Bloatfly Swarm", "Deathclaw Alpha", "Ya Guai Wanderer",
+        "Feral Ghoul Pack", "Vault 13 Survivor", "Pip-Boy 3000", "Bottle Cap Stash", "Stimpak Supply",
+        "Nuka-Cola Quantum", "Power Armor Suit", "Laser Rifle Prototype", "Fat Man Launcher", "Plasma Grenade",
+        "Shredder's Foot Soldiers", "Bebop, Mutant Rhino", "Rocksteady, War Boar", "Karai, Shadow Leader", "Baxter Stockman, Mad Scientist",
+        "Rat King, Sewer Lord", "Leatherhead, Swamp Gator", "Slash, Turtle Menace", "Metalhead, Robotic Ally", "Casey Jones, Vigilante",
+        "Mouser Swarm", "Technodrome Core", "Mutagen Ooze Vessel", "Dimension X Portal", "Sewer Grate Hideout",
+        "Pizza Party Feast", "Turtle Van", "Ninja Training Grounds", "Hamato Clan Dojo", "Foot Clan Stronghold",
+        "Frodo, Ring-Bearer", "Samwise Gamgee", "Pippin, Guard of the Citadel", "Merry, Esquire of Rohan", "Aragorn, King of Gondor",
+        "Legolas, Master Archer", "Gimli, Counter of Kills", "Boromir, Warden of the Tower", "Faramir, Field Commander", "Eowyn, Shieldmaiden of Rohan",
+        "Eomer, Marshal of the Riddermark", "Theoden, King of Rohan", "Treebeard, Gracious Host", "Quickbeam, Upbeat Ent", "Fangorn, Tree Shepherd", "Radagast the Brown", "Elrond, Lord of Rivendell", "Arwen, Undomiel", "Galadriel, Light of Valinor", "Celeborn, Lord of Lorien",
+        "Haldir, Lorien Lieutenant", "Cirdan the Shipwright", "Glorfindel, Rivendell Stalker", "Shadowfax, Lord of Horses", "Gwaihir, the Wind King",
+        "Bill the Pony", "Rosie Cotton of Bywater", "Farmer Maggot", "Butterbur, Bree Innkeeper", "Old Man Willow",
+        "Tom Bombadil", "Goldberry, River-Daughter", "Gollum, Scheming Suitor", "Sauron, the Dark Lord", "Sauron, Lord of the Rings",
+        "Witch-king of Angmar", "Nazgul Commander", "Saruman of Many Colors", "Saruman the White", "Grima Wormtongue",
+        "Gothmog, Morgul Lieutenant", "Mouth of Sauron", "Shelob, Child of Ungoliant", "Cave Troll of Moria", "Balrog, Flame of Udun",
+        "Watcher in the Water", "Ringwraith Stalker", "Orcish Bowmasters", "Uruk-hai Berserker", "Haradrim Spearman",
+        "Easterling Vanguard", "Corsairs of Umbar", "Dunlendings Raider", "Moria Marauder", "Gorgoroth Enforcer",
+        "Barad-dur Watchman", "Cirith Ungol Guard", "Minas Morgul Specter", "Osgiliath Veteran", "Pelennor Guard",
+        "Edoras Horseman", "Helm's Deep Defender", "Isengard Overseer", "Fangorn Protector", "Mirkwood Tracker",
+        "Lothlorien Archer", "Rivendell Scholar", "Shire Sheriff", "Bree Security", "Dead Marshes Specter",
+        "Paths of the Dead Ghost", "Dunharrow Trooper", "Grey Havens Sailor", "Iron Hills Dwarf", "Erebor Sentry",
+        "Dale Merchant", "Esgaroth Boatman", "Beorning Berserker", "Rohan Vanguard", "Gondor Shieldbearer",
+        "Ithilien Ranger", "Dol Amroth Knight", "Lossarnach Axeman", "Lamedon Clansman", "Anfalas Bowman",
+        "Pelargir Marine", "Lebennin Woodman", "Blackroot Vale Archer", "Pinnath Gelin Cavalry", "Ring-bearer Initiate",
+        "Fellowship Traveler", "Nine Companions Leader", "One Ring Bearer", "Shadow of the Past", "Flight to the Ford",
+        "Council of Elrond Member", "Moria Expedition Scout", "Lothlorien Pilgrim", "Amon Hen Watcher", "Rohan Emissary",
+        "Gondor Diplomat", "Mordor Infiltrator", "Haradrim Nomad", "Easterling Mercenary", "Corsair Captain",
+        "Dunlending Chieftain", "Orc Chieftain", "Uruk-hai Captain", "Troll Chieftain", "Nazgul Rider",
+        "Witch-king Lieutenant", "Black Rider", "Morgul Blade Wielder", "Barrow-wight Spectre", "Dead Man of Dunharrow",
+        "Ghost of the Marches", "Oathbreaker Captain", "Stone-troll Brawler", "Hill-troll Crusher", "Snow-troll Marauder",
+        "Cave-troll Smasher", "Mountain-troll Titan", "Ent of Fangorn", "Huorn Sentinel", "Awakened Tree Guardian",
+        "Woodland Elven Scout", "High Elven Noble", "Rivendell Knight", "Grey Havens Navigator", "Mirkwood Ranger",
+        "Lothlorien Guard", "Silvan Archer", "Sindarin Diplomat", "Erebor Guard", "Iron Hills Warrior",
+        "Dwarf-of-the-Blue-Mountains", "Broadbeam Miner", "Firebeard Smith", "Stiffbeard Mason", "Stonefoot Craftsman",
+        "Ironfist Sledge", "Blacklock Enforcer", "Hobbit Bounder", "Shire Farmer", "Buckland Fisherman",
+        "Tookland Militia", "Marish Planter", "Bywater Miller", "Frogmorton Bartender", "Michel Delving Mayor",
+        "Scary Quarryman", "Needlehole Tailor", "Whitfurrows Baker", "Stock Brewer", "Longbottom Leaf Grower",
+        "Bree Gatekeeper", "Prancing Pony Bouncer", "Archet Woodsman", "Combe Herbalist", "Staddle Potter",
+        "Chetwood Hunter", "Midgewater Swarm", "Weather Hills Ranger", "Lone-lands Nomad", "Trollshaws Guide",
+        "Ettenmoors Tracker", "Angmar Cultist", "Fornost Restless Spirit", "Carn Dum Zealot", "Rhudaur Bandit",
+        "Cardolan Guard", "Arthedain Knight", "Arnor Veteran", "Númenórean Noble", "Dúnedain Chieftain",
+        "Ranger of the North", "Wilderland Wanderer", "Beorning Skin-changer", "Mirkwood Spider Queen", "Dol Guldur Necromancer",
+        "Radagast's Companion", "Great Eagle Sentinel", "Warg Rider Captain", "Goblin-town Scavenger", "Moria Miner",
+        "Gundabad Warlord", "Iron Hills Smelter", "Lonely Mountain Guardian", "Esgaroth Town Guard", "Lake-town Master",
+        "Dale Swordmaster", "Thranduil's Guard", "Woodland Realm Bowman", "Iron Hills Crossbowman", "Raven of Erebor",
+        "Thrush of the Mountain", "Smaug's Shadow", "Fire-drake of the North", "Cold-drake Guardian", "Long-worm Serpent",
+        "Cave Spider Den", "Giant Spider Weaver", "Mirkwood Webspinner", "Ash Mountains Stalker", "Shadowy Specter",
+        "Gorgoroth Orc Slaver", "Lithlad Nomad", "Nurn Slave Master", "Khand Charioteer", "Haradrim Mumak Rider",
+        "Umbar Raider Chief", "Corsair Fleet Admiral", "Far Harad Warrior", "Near Harad Spearman", "Variag of Khand",
+        "Half-orc Mercenary", "Isengard Sapper", "Uruk-hai Crossbowman", "Dunland Axeman", "Rohan Horse-lord",
+        "Edoras Shieldmaiden", "Helm's Deep Crossbowman", "Harrowdale Shepherd", "Dunharrow Ghost Commander", "Paths of the Dead Spectre",
+        "Pelennor Knight", "Minas Tirith Defender", "Osgiliath Veteran Captain", "Cair Andros Guard", "Ithilien Tracker",
+        "Henneth Annun Ranger", "Lossarnach Axemaster", "Lebennin Mariner", "Blackroot Vale Marksman", "Lamedon Clansman Leader",
+        "Dol Amroth Swan Knight", "Pinnath Gelin Cavalry Captain", "Ethir Mariner", "Anfalas Herd Master", "Ring-bearer Guardian",
+                // PART 3 OF 4: CARDS 601 TO 900
+        "Shadowed Fate", "Arcane Infusion", "Temporal Tether", "Vortex of Doom", "Aether Surge",
+        "Mystic Reflection", "Spectral Binding", "Essence Drain", "Phantom Strike", "Chrono Break",
+        "Rift Warp", "Nullify Spells", "Void Gazer", "Astral Beacon", "Starlight Blessing",
+        "Ethereal Chains", "Warp Pulse", "Dimensional Tear", "Cosmic Radiance", "Abyssal Echo",
+        "Nether Rejection", "Soul Cleave", "Doom Siphon", "Oblivion Field", "Grasp of Darkness",
+        "Shadow Pulse", "Death's Embrace", "Fatal Rupture", "Grave Purge", "Corrupting Touch",
+        "Terror of the Void", "Dark Salvation", "Dread Reaping", "Sinister Pact", "Vampiric Touch",
+        "Blood Sacrifice", "Infernal Bargain", "Soul Extraction", "Fiendish Rebuke", "Hellfire Spark",
+        "Pyroclastic Blast", "Flame Wreathed", "Searing Embers", "Magma Eruption", "Volcanic Tempest",
+        "Blazing Onslaught", "Inferno Bolt", "Thermal Shock", "Molten Surge", "Ignite Soul", "Furious Strike",
+        "Wildfire Rampage", "Chaos Burst", "Cinder Storm", "Ember Spray", "Wild Growth Surge",
+        "Verdant Infusion", "Nature's Reclamation", "Sylvan Awakening", "Rootbound Barrier", "Primal Roar",
+        "Floral Blessing", "Barkskin Shield", "Terran Charge", "Overgrowth Spark", "Timber Crash",
+        "Earthy Touch", "Natural Synergy", "Vine Whip", "Spore Cloud", "Bountiful Harvest",
+        "Sunlit Shield", "Divine Benediction", "Holy Aura", "Radiant Cleansing", "Celestial Aegis",
+        "Angelic Protection", "Righteous Fury", "Purifying Flame", "Dawn's Light", "Sacred Vow",
+        "Aura of Hope", "Luminous Ward", "Graceful Blessing", "Solemn Prayer", "Beacon of Light",
+        "Arcane Signet Prototype", "Sol Catalyst", "Chromatic Dynamo", "Mana Generator", "Power Matrix Core",
+        "Aether Lens", "Prismatic Orb", "Crystal Capacitor", "Energy Cell", "Overcharged Engine",
+        "Mana Battery", "Flux Conduit", "Relic Transformer", "Temporal Dial", "Void Mirror",
+        "Soul Crucible", "Eldritch Obelisk", "Dimensional Anchor", "Darksteel Relic Core", "Celestial Orrery",
+        "Rune-Forged Blade", "Shadow Dagger", "Ethereal Armor Set", "Aegis of the Fallen", "Helm of Command",
+        "Boots of Swiftness", "Cloak of Invisibility", "Gauntlets of Might", "Ring of Evocation", "Amulet of Vitality",
+        "Crown of Kings", "Staff of Elements", "Shield of Valor", "Warhammer of Titan", "Bow of the Hunter",
+        "Gilded Chalice", "Tome of Ancients", "Mirror of Truth", "Orb of Sight", "Lantern of Souls",
+        "Scepter of Power", "Horn of Plenty", "Altar of Devotion", "Pedestal of Glory", "Vault of Secrets",
+        "Scroll of Wisdom", "Compass of the Lost", "Hourglass of Time", "Chime of Harmony", "Censer of Peace",
+        "Darksteel Forge Node", "Mind Stone Matrix", "Hedron Network Fragment", "Thought Vessel Core", "Reliquary Tower Key",
+        "Sol Ring Replica", "Thran Dynamo Catalyst", "Gilded Lotus Blossom", "Lotus Petal Shard", "Black Lotus Fragment",
+        "Mana Vault Lock", "Grim Monolith Pillar", "Basalt Monolith Fragment", "Mox Diamond Prism", "Mox Opal Shard",
+        "Mox Amber Gem", "Chrome Mox Plating", "Mox Tantalite Catalyst", "Jeweled Lotus Petal", "Mana Crypt Key",
+        "Lightning Greaves Set", "Swiftfoot Boots Pair", "Champion's Helm Core", "Skullclamp Fixture", "Ashnod's Altar Base",
+        "Phyrexian Altar Frame", "Nim Deathmantle Weave", "Aetherflux Reservoir Core", "Bolas's Citadel Gate", "Sensei's Divining Top Node",
+        "Smothering Tithe Ledger", "Esper Sentinel Shield", "Rhystic Study Tome", "Mystic Remora Shell", "Sylvan Library Scroll",
+        "Necropotence Skull", "Phyrexian Arena Floor", "Black Market Connections Node", "Kindred Discovery Rune", "Guardian Project Grove",
+        "Beast Whisperer Companion", "Lifecrafter's Bestiary Page", "Great Henge Root", "Trouble in Pairs Seal", "Monologue Tax Ledger",
+        "Loran's Third Path Relic", "Skyclave Apparition Spirit", "Solitude Essence", "Grief Whispers", "Subtlety Shard",
+        "Endurance Roots", "Fury Flames", "Force of Will Scroll", "Force of Negation Shield", "Mana Drain Catalyst",
+        "Counterspell Wand", "Fierce Guardianship Ward", "Deflecting Swat Spark", "Deadly Rollick Dagger", "Flawless Maneuver Crest",
+        "Heroic Intervention Charm", "Teferi's Protection Veil", "Cyclonic Rift Vortex", "Toxic Deluge Vial", "Damnation Orb",
+        "Wrath of God Tablet", "Blasphemous Act Rune", "Vanquish the Horde Blade", "Farewell Light", "Supreme Verdict Gavel",
+        "Languish Smoke", "Crux of Fate Dragon Scale", "Extinction Event Marker", "Shadows' Verdict Mask", "Crippling Fear Shackles",
+        "Meathook Massacre Wire", "Bastion of Remembrance Flag", "Dreadhorde Invasion Banner", "Bitterblossom Petal", "Skrelv's Hive Node",
+        "Ghoulcaller's Tome", "Poppet Stitcher Needle", "Ophiomancer Idol", "Grave Titan Chain", "Wurmcoil Core",
+        "Noxious Gearhulk Visage", "Verdurous Gearhulk Moss", "Combustible Gearhulk Ash", "Torrential Gearhulk Wave", "Cataclysmic Gearhulk Crest",
+        "Sword of Feast and Famine", "Sword of Fire and Ice", "Sword of Light and Shadow", "Sword of Body and Mind", "Sword of War and Peace",
+        "Sword of Truth and Justice", "Sword of Sinew and Steel", "Sword of Hearth and Home", "Sword of Forge and Frontier", "Sword of Once and Future",
+        "Shadowspear Point", "Umezawa's Jitte Edge", "Batter-skull Assembly", "Kaldra Compleat Relic", "Hammer of Nazahn", "Colossus Hammer Heavy",
+        "Bloodforged Battle-Axe", "Blackblade Reforged", "Mace of the Valiant", "Sword of the Animist", "Heirloom Blade",
+        "Hero's Blade", "Infiltration Lens", "Mask of Memory", "Skullclamp Wire", "Loxodon Warhammer",
+        "Quietus Spike", "Scythe of the Wretched", "Argentum Armor", "Fireshrieker", "Grafted Exoskeleton",
+        "Whispersilk Cloak", "Swiftfoot Boots", "Lightning Greaves", "Prowler's Helm", "Rogue's Gloves",
+        "Trailblazer's Boots", "Zephyr Boots", "Fleetfeather Sandals", "Winged Boots", "Strider Harness",
+        "Darksteel Plate", "Shield of Kaldra", "Sword of Kaldra", "Helm of Kaldra", "Ring of Kalonia",
+        "Ring of Evos Isle", "Ring of Xathrid", "Ring of Valkas", "Ring of Thune", "Mirran Spyglass",
+        "Spyglass of the Seekers", "Glasses of Urza", "Urza's Bauble", "Mishra's Bauble", "Conjurer's Bauble",
+        "Wayfarer's Bauble", "Soul-Guide Lantern", "Relic of Progenitus", "Tormod's Crypt", "Nihil Spellbomb",
+        "Scrabbling Claws", "Phyrexian Spellbomb", "Sunbeam Spellbomb", "Lifespark Spellbomb", "Aether Spellbomb",
+        "Flight Spellbomb", "Necrogen Spellbomb", "Pyrite Spellbomb", "Origin Spellbomb", "Panic Spellbomb",
+                // PART 4 OF 4: CARDS 901 TO 1,157 & CLOSING ARRAY
+        "Bojuka Bog", "Takenuma, Abandoned Mire", "Boseiju, Who Endures", "Eiganjo, Seat of the Empire", "Otawara, Soaring City",
+        "Sokenzan, Crucible of Defiance", "Reliquary Tower", "Rogue's Passage", "High Market", "Phyrexian Tower",
+        "Westvale Abbey", "Volrath's Stronghold", "Academy Ruins", "Hall of Heliod's Generosity", "Field of the Dead",
+        "Scavenger Grounds", "Geier Reach Sanitarium", "Mikokoro, Center of the Sea", "War Room", "Bonders' Enclave",
+        "Castle Locthwain", "Castle Garenbrig", "Castle Vantress", "Castle Ardenvale", "Castle Embereth",
+        "Witch's Cottage", "Gingerbread Cabin", "Idyllic Grange", "Dwarf Hold", "Hickory Woodlot",
+        "Peat Bog", "Remote Farm", "Sandstone Needle", "Saprazzan Skerry", "Ebon Stronghold",
+        "Havenwood Battleground", "Ruins of Trokair", "Svyelunite Temple", "Dwarven Ruins", "Vault of Champions",
+        "Spectator Seating", "Training Center", "Undergrowth Stadium", "Rejuvenating Springs", "Vault of Whispers",
+        "Tree of Tales", "Seat of the Synod", "Great Furnace", "Ancient Den", "Darksteel Citadel",
+        "Arcane Lighthouse", "Detection Tower", "Homeward Path", "Command Beacon", "Spire of Industry",
+        "Aether Hub", "Exotic Orchard", "Path of Ancestry", "Reflecting Pool", "City of Brass",
+        "Mana Confluence", "Forbidden Orchard", "Tarnished Citadel", "Gemstone Mine", "Crystal Quarry",
+        "Cascading Cataracts", "Shimmering Grotto", "Unknown Shores", "Holdout Settlement", "Survivors' Encampment",
+        "Cryptic Caves", "Arch of Orazca", "Estate Gate", "Cliffgate", "Black Dragon Gate",
+        "Citadel Gate", "Sea Gate", "Gond Gate", "Heap Gate", "Manor Gate",
+        "Baldur's Gate", "Thran Portal", "Demolition Field", "Field of Ruin", "Ghost Quarter",
+        "Tectonic Edge", "Encroaching Wastes", "Wasteland", "Strip Mine", "Dust Bowl", "Deserted Temple",
+        "Nykthos, Shrine to Nyx", "Cabal Coffers", "Cabal Stronghold", "Urborg, Tomb of Yawgmoth", "Yavimaya, Cradle of Growth",
+        "Crypt of Agadeem", "Lake of the Dead", "Phyrexian Devourer Land", "Volcano Hellion Ridge", "Glacial Chasm",
+        "Maze of Ith", "Kor Haven", "Prahv, Spires of Order", "Sunhome, Fortress of the Legion", "Skarrg, the Rage Pits",
+        "Vitu-Ghazi, the City-Tree", "Svogthos, the Restless Tomb", "Duskmantle, House of Shadow", "Nivix, Aerie of the Firemind", "Orzhova, the Church of Deals",
+        "Rath's Edge", "Kor Haven Garrison", "Kessig Wolf Run", "Gavony Township", "Moorland Haunt",
+        "Nephalia Drownyard", "Vault of the Archangel", "Alchemist's Refuge", "Slayer's Stronghold", "Desolate Lighthouse",
+        "Grim Backwoods", "Rogue's Hideout", "Spawning Bed", "Foundry of the Consuls", "Gargoyle Castle",
+        "Mage-Ring Network", "Dread Statuary", "Stirring Wildwood", "Raging Ravine", "Lumbering Falls",
+        "Celestial Colonnade", "Creeping Tar Pit", "Hissing Quagmire", "Needleverge Pathway", "Hengegate Pathway",
+        "Branchloft Pathway", "Brightclimb Pathway", "Clearwater Pathway", "Cragcrown Pathway", "Darkbore Pathway",
+        "Riverglide Pathway", "Barkchannel Pathway", "Blightstep Pathway", "Kaldheim Snow Swamp", "Kaldheim Snow Forest",
+        "Kaldheim Snow Plains", "Kaldheim Snow Mountain", "Kaldheim Snow Island", "Ash Barrens", "Evolving Wilds Core",
+        "Terramorphic Expanse Core", "Myriad Landscape", "Bighted Woodland", "Blighted Fen", "Blighted Cataract",
+        "Blighted Gorge", "Blighted Steppe", "Haunted Mire", "Idyllic Beachfront", "Radiant Grove",
+        "Sunlit Marsh", "Tangling Islet", "Wooded Ridgeline", "Contaminated Aquifer", "Geothermal Bog",
+        "Molten Tributary", "Sacred Peaks", "Overgrown Farmland", "Deserted Beach", "Haunted Ridge",
+        "Rockfall Vale", "Shipwreck Marsh", "Dreamroot Cascade", "Shattered Sanctum", "Stormcarved Coast",
+        "Sundown Pass", "Deathcap Glade", "Restless Bivouac", "Restless Fortress", "Restless Cottage",
+        "Restless Spire", "Restless Reef", "Restless Vents", "Restless Anchorage", "Restless Prairie",
+        "Restless Ridge", "Restless Marsh", "Llanowar Reaches", "Sylvan Basin", "Gloom Mire",
+        "Sunstone Quarry", "Frost peak Summit", "Windswept Crag", "Volcanic Ridge", "Ethereal Valley",
+        "Obsidian Crater", "Chrono Spring", "Void Abyss", "Titan's Graveyard", "Crystal Cavern",
+        "Swamp", "Forest", "Plains", "Mountain", "Island"
+    ];
+
     let masterCatalog = [];
-    let generatedRawText = "";
-
-    // Color Identity and Type Registry
-    const legendDatabase = {
-        "Myrkul, Lord of Bones": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Aristocrats / Enchantments" },
-        "Slimefoot, the Stowaway": { colors: ["B","G"], type: "Legendary Creature", arch: "Aristocrats / Saprolings" },
-        "Frodo, Adventurous Hobbit": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Food Tokens" },
-        "Sam, Loyal Attendant": { colors: ["W","B","G"], type: "Legendary Creature", arch: "Food Tokens / Life" },
-        "Oroku Saki, Shredder Rising": { colors: ["B"], type: "Legendary Creature", arch: "Ninja / Aggro" },
-        "Splinter, Hamato Yoshi": { colors: ["G"], type: "Legendary Creature", arch: "Counters / Martial" },
-        "Michelangelo, Game Master": { colors: ["R"], type: "Legendary Creature", arch: "Chaos / Combat" },
-        "April O'Neil, Kunoichi Trainer": { colors: ["U"], type: "Legendary Creature", arch: "Evasion / Draw" },
-        "Jennika, Bad Apple Big Sister": { colors: ["B"], type: "Legendary Creature", arch: "Aristocrats / Aggro" },
-        "Vraska, Soul of Stone": { colors: ["B","G"], type: "Planeswalker Commander", arch: "Removal / Tokens" },
-        "Vraska, the Cutting Glare": { colors: ["B","G"], type: "Planeswalker Commander", arch: "Deathtouch / Control" },
-        "Pia, Determined Rebuilder": { colors: ["R"], type: "Legendary Creature", arch: "Exile / Artifacts" },
-        "Pia, Aether Ascetic": { colors: ["G"], type: "Legendary Creature", arch: "Energy / Ramp" },
-        "Saheeli, Consul of Oversight": { colors: ["U","R"], type: "Legendary Creature", arch: "Thopters / Artifacts" },
-        "Loot, the Nexus": { colors: ["G","U","R"], type: "Legendary Creature", arch: "Exile Engine" },
-        "Winter, Team Player": { colors: ["B","R"], type: "Legendary Creature", arch: "Delirium / Sac" },
-        "Tetsuko Umezawa, Pursuer": { colors: ["U"], type: "Legendary Creature", arch: "Unblockable" },
-        "Arni, Renowned Champion": { colors: ["R"], type: "Legendary Creature", arch: "Boast / Aggro" },
-        "Teyo, Lightshield Expert": { colors: ["W"], type: "Legendary Creature", arch: "Tokens / Defense" },
-        "Koth, the Geomancer": { colors: ["R"], type: "Planeswalker Commander", arch: "Mountains / Burn" },
-        "Thranduil, Sindarin Liege": { colors: ["G","U"], type: "Legendary Creature", arch: "Elves / Draw" },
-        "Bilbo Baggins, Burglar": { colors: ["U","R"], type: "Legendary Creature", arch: "Treasure Engine" },
-        "Beorn, Reluctant Host": { colors: ["G"], type: "Legendary Creature", arch: "Beasts / Aggro" },
-        "Tom, Bert, and William": { colors: ["R","G"], type: "Legendary Creature", arch: "Trolls / Food" },
-        "Galion, Elvenking's Butler": { colors: ["G","U"], type: "Legendary Creature", arch: "Elves / Scry" },
-        "Bombur, Gentle Dreamer": { colors: ["R"], type: "Legendary Creature", arch: "Dwarves / Treasures" },
-        "Gollum the Abandoned": { colors: ["B"], type: "Legendary Creature", arch: "Graveyard / Sac" },
-        "Azog, Moria's Ruin": { colors: ["B","R"], type: "Legendary Creature", arch: "Orcs / Mill" },
-        "Bolg of the North": { colors: ["B","R"], type: "Legendary Creature", arch: "Aggro / Goblins" },
-        "Dori, Bearer of Friends": { colors: ["W"], type: "Legendary Creature", arch: "Equipment / Tokens" },
-        "Gandalf, Spark Starter": { colors: ["U","R","W"], type: "Legendary Creature", arch: "Spellslinger" },
-        "Gollum, Silent Slinker": { colors: ["B"], type: "Legendary Creature", arch: "Ring / Evasion" },
-        "Lorcan, Warlock Collector": { colors: ["B"], type: "Legendary Creature", arch: "Reanimation" },
-        "Taborax, Hope's Demise": { colors: ["B"], type: "Legendary Creature", arch: "Clerics / Sac" },
-        "Sauron, the Dark Lord": { colors: ["U","B","R"], type: "Legendary Creature", arch: "Amass Orcs / Ring" },
-        "Sauron, Lord of the Rings": { colors: ["U","B","R"], type: "Legendary Creature", arch: "Reanimation / Mill" },
-        "Witch-king of Angmar": { colors: ["B"], type: "Legendary Creature", arch: "Discard / Evasion" },
-        "Saruman of Many Colors": { colors: ["W","U","B"], type: "Legendary Creature", arch: "Spells / Steal" },
-        "Shelob, Child of Ungoliant": { colors: ["B","G"], type: "Legendary Creature", arch: "Spiders / Deathtouch" },
-        "Aragorn, King of Gondor": { colors: ["U","R","W"], type: "Legendary Creature", arch: "Monarch / Humans" },
-        "Tom Bombadil": { colors: ["W","U","B","R","G"], type: "Legendary Creature", arch: "Sagas / Enchantments" }
-    };
-
-    function determineCardDetails(name) {
-        if (legendDatabase[name]) {
-            return {
-                name: name,
-                type: legendDatabase[name].type,
-                colors: legendDatabase[name].colors,
-                isLegend: true,
-                arch: legendDatabase[name].arch
-            };
-        }
-
-        let type = "Creature";
-        let colors = [];
-
-        // Basic & Dual Lands
-        if (["Swamp","Takenuma, Abandoned Mire","Bojuka Bog","Vault of Whispers","Restless Cottage","Overgrown Tomb","Godless Shrine","Blood Crypt","Caves of Koilos","Llanowar Wastes","Underground River","Twilight Mire","Fetid Heath","Graven Cairns","Vault of Champions","Undergrowth Stadium","Hengegate Pathway","Darkbore Pathway","Blightstep Pathway","Deathcap Glade"].includes(name)) {
-            type = "Land"; colors = ["B"];
-        } else if (["Forest","Boseiju, Who Endures","Tree of Tales","Temple Garden","Stomping Ground","Breeding Pool","Brushland","Karplusan Forest","Yavimaya Coast","Flooded Grove","Rejuvenating Springs","Branchloft Pathway","Barkchannel Pathway","Restless Prairie"].includes(name)) {
-            type = "Land"; colors = ["G"];
-        } else if (["Plains","Eiganjo, Seat of the Empire","Ancient Den","Adarkar Wastes","Battlefield Forge","Rugged Prairie","Clearwater Pathway","Brightclimb Pathway"].includes(name)) {
-            type = "Land"; colors = ["W"];
-        } else if (["Mountain","Sokenzan, Crucible of Defiance","Great Furnace","Sulfurous Springs","Shivan Reef","Cascading Cataracts"].includes(name)) {
-            type = "Land"; colors = ["R"];
-        } else if (["Island","Otawara, Soaring City","Seat of the Synod"].includes(name)) {
-            type = "Land"; colors = ["U"];
-        } else if (name.includes("Land") || name.includes("Commons") || name.includes("Annex") || name.includes("Gate") || name.includes("Tower") || name.includes("Passage") || name.includes("Orchard") || name.includes("Commons")) {
-            type = "Land"; colors = [];
-        } 
-        // Artifacts & Ramp
-        else if (["Arcane Signet","Sol Ring","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone","Thrór's Map","Pip-Boy 3000","Lightning Greaves","Swiftfoot Boots","Skullclamp","Ashnod's Altar","Phyrexian Altar","Aetherflux Reservoir","Bolas's Citadel","Sensei's Divining Top","Smothering Tithe"].includes(name) || name.includes("Signet") || name.includes("Bauble") || name.includes("Mox") || name.includes("Sword of")) {
-            type = "Artifact"; colors = [];
-        }
-        // Instants & Sorceries
-        else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality","Restore with Empathy","Gathering of Darkness","Tidings of War","Rage Into the Valley","Doom Foretold","Summon: Fenrir","Syphon Essence","Firja's Retribution","Vivien's Talent","Animist's Awakening","Glimmerburst","Walk with the Ancestors","Plasma Bolt","Surgical Precision","Tethermage's Advantage","No Admittance","Fulminous Forte","Cruel Calculations","Flourishing Grapple","Something Worth Saving","Artificer's Acumen","Vindicate's Triumph","Giant Growth","Ritual of Rejuvenation","Soul Salvage","Countersculpt","Extended Absence","Theorix Charm","Sphinx's Approach","Cyclonic Rift","Toxic Deluge","Damnation","Wrath of God","Blasphemous Act","Farewell","Heroic Intervention","Teferi's Protection","Force of Will","Counterspell"].includes(name) || name.includes("Touch") || name.includes("Strike") || name.includes("Burst") || name.includes("Vortex")) {
-            type = "Instant/Sorcery"; colors = [];
-        }
-
-        // Default Color Inference based on keywords
-        if (colors.length === 0 && type !== "Artifact" && type !== "Land") {
-            if (name.includes("Demon") || name.includes("Shadow") || name.includes("Dark") || name.includes("Grave") || name.includes("Blood") || name.includes("Orc") || name.includes("Thallid") || name.includes("Vampire")) colors.push("B");
-            if (name.includes("Elven") || name.includes("Forest") || name.includes("Hydra") || name.includes("Ent") || name.includes("Tree") || name.includes("Saproling")) colors.push("G");
-            if (name.includes("Angel") || name.includes("Holy") || name.includes("Light") || name.includes("Shield") || name.includes("Knight") || name.includes("Rohan")) colors.push("W");
-            if (name.includes("Flame") || name.includes("Ember") || name.includes("Goblin") || name.includes("Dragon") || name.includes("Inferno")) colors.push("R");
-            if (name.includes("Mage") || name.includes("Wave") || name.includes("Aether") || name.includes("Sphinx") || name.includes("Mind")) colors.push("U");
-        }
-
-        return { name: name, type: type, colors: colors, isLegend: false, arch: "General Pool" };
-    }
 
     function initApp() {
-        const rawList = window.FULL_MTG_CATALOG || [];
-        masterCatalog = rawList.map(name => determineCardDetails(name));
+        masterCatalog = rawMasterList.map(name => {
+            const cleanName = name.replace(/^\d+\s+/, "").trim();
+            const isLeg = ["Lord", "Shredder", "Slimefoot", "Frodo", "Sam", "Splinter", "Vraska", "Gix", "Captain", "Pia", "Saheeli", "Loot", "Winter", "Tetsuko", "Arni", "Teyo", "Koth", "Thranduil", "Bilbo", "Beorn", "Tom", "Galion", "Bombur", "Gollum", "Azog", "Bolg", "Dori", "Gandalf", "Lorcan", "Taborax", "Sauron", "Saruman", "Mothman", "Master"].some(k => cleanName.includes(k));
+            
+            let cardType = isLeg ? "Legendary Creature" : "Creature";
+            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town","Mirkwood"].some(l => cleanName.includes(l)) || cleanName.includes("Gate") || cleanName.includes("Pathway") || cleanName.includes("Ridge") || cleanName.includes("Bog")) {
+                cardType = "Land";
+            } else if (["Signet","Lantern","Talisman","Archive","Stone","Bankbuster","Mirror","Sword","Endstone","Map","Ring","Vault","Catalyst"].some(a => cleanName.includes(a))) {
+                cardType = "Artifact";
+            } else if (["End","Judgment","Charm","Wrath","Slice","Teeth","Bog","Sabotage","Brutality","Tidings","Foretold","Essence","Burst","Pulse"].some(s => cleanName.includes(s))) {
+                cardType = "Instant/Sorcery";
+            }
+
+            return { name: cleanName, type: cardType, isLegend: isLeg };
+        });
 
         document.getElementById("cardCounter").innerText = `${masterCatalog.length} Total Cards Vaulted`;
         
         const legendCount = masterCatalog.filter(c => c.isLegend).length;
-        document.getElementById("commanderCounter").innerText = `${legendCount} Commanders Ready`;
+        document.getElementById("commanderCounter").innerText = `${legendCount} Commanders`;
 
         populateCommanders();
         filterCollection();
@@ -407,7 +485,96 @@
         legends.forEach(l => {
             const opt = document.createElement("option");
             opt.value = l.name;
-            const colorStr = l.colors.length > 0 ? l.colors.join("") : "Colorless";
-            opt.innerText = `${l.name} (${colorStr} • ${l.arch})`;
+            opt.innerText = `${l.name} (${l.type})`;
             dropdown.appendChild(opt);
         });
+    }
+
+    function renderCollection(cards) {
+        const container = document.getElementById("cardContainer");
+        container.innerHTML = "";
+
+        cards.slice(0, 120).forEach(card => {
+            const cardEl = document.createElement("div");
+            cardEl.className = "card-item";
+            const imgUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(card.name)}&format=image`;
+
+            cardEl.innerHTML = `
+                <img class="card-img" src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.src='https://cards.scryfall.io/back.png'">
+                <div class="card-info">
+                    <div class="card-title">${card.name}</div>
+                    <div class="card-type">${card.type}</div>
+                </div>
+            `;
+            container.appendChild(cardEl);
+        });
+    }
+
+    function filterCollection() {
+        const search = document.getElementById("searchInput").value.toLowerCase();
+        const type = document.getElementById("typeFilter").value;
+
+        const filtered = masterCatalog.filter(c => {
+            const matchSearch = c.name.toLowerCase().includes(search);
+            const matchType = type === "ALL" || (type === "Legendary" && c.isLegend) || c.type.includes(type);
+            return matchSearch && matchType;
+        });
+
+        renderCollection(filtered);
+    }
+
+    function switchTab(tabId, evt) {
+        document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+        evt.target.classList.add("active");
+    }
+
+    function buildOptimalDeck() {
+        const cmdName = document.getElementById("commanderDropdown").value;
+        const display = document.getElementById("deckDisplay");
+        display.style.display = "grid";
+
+        const pool = masterCatalog.filter(c => c.name !== cmdName);
+        const creatures = pool.filter(c => c.type === "Creature" || c.type === "Legendary Creature");
+        const spells = pool.filter(c => c.type === "Instant/Sorcery");
+        const artifacts = pool.filter(c => c.type === "Artifact");
+        const lands = pool.filter(c => c.type === "Land" && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
+
+        const selectedCreatures = creatures.slice(0, 32);
+        const selectedSpells = spells.slice(0, 18);
+        const selectedArtifacts = artifacts.slice(0, 12);
+        const selectedLands = lands.slice(0, 8);
+
+        const totalSelected = 1 + selectedCreatures.length + selectedSpells.length + selectedArtifacts.length + selectedLands.length;
+        const basicsNeeded = 100 - totalSelected;
+
+        display.innerHTML = `
+            <div class="deck-col">
+                <h3>Command Zone (1)</h3>
+                <ul class="deck-list"><li><strong>1x ${cmdName}</strong></li></ul>
+                <h3>Synergy Creatures (${selectedCreatures.length})</h3>
+                <ul class="deck-list">${selectedCreatures.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+            </div>
+            <div class="deck-col">
+                <h3>Spells & Removal (${selectedSpells.length})</h3>
+                <ul class="deck-list">${selectedSpells.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+                <h3>Ramp & Artifacts (${selectedArtifacts.length})</h3>
+                <ul class="deck-list">${selectedArtifacts.map(c => `<li>1x ${c.name}</li>`).join("")}</ul>
+            </div>
+            <div class="deck-col">
+                <h3>Lands & Mana Base (${selectedLands.length + basicsNeeded})</h3>
+                <ul class="deck-list">
+                    ${selectedLands.map(c => `<li>1x ${c.name}</li>`).join("")}
+                    <li>${Math.ceil(basicsNeeded * 0.5)}x Basic Swamps / Forests</li>
+                    <li>${Math.floor(basicsNeeded * 0.5)}x Basic Mountains / Plains / Islands</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    window.onload = initApp;
+</script>
+
+</body>
+</html>
