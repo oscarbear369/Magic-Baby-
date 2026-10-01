@@ -1048,19 +1048,22 @@
         filterCollection();
     }
 
-    function populateCommanders() {
+        function populateCommanders() {
         const dropdown = document.getElementById("commanderDropdown");
         if (!dropdown) return;
         dropdown.innerHTML = "";
 
+        // Filters the master catalog for all legendary creatures / planeswalker commanders
         const legends = masterCatalog.filter(c => c.isLegend);
         legends.forEach(l => {
             const opt = document.createElement("option");
             opt.value = l.name;
-            opt.innerText = `${l.name} (${l.set || 'MTG'} - ${l.type || 'Commander'})`;
+            const colorStr = (l.colors && l.colors.length > 0) ? l.colors.join("/") : "Colorless";
+            opt.innerText = `${l.name} (${l.set || 'MTG'} - ${colorStr})`;
             dropdown.appendChild(opt);
         });
     }
+
 
     function renderCollection(cards) {
         const container = document.getElementById("cardContainer");
@@ -1094,14 +1097,14 @@
         });
     }
 
-    function filterCollection() {
+     function filterCollection() {
         const searchInput = document.getElementById("searchInput");
         const typeInput = document.getElementById("typeFilter");
         const cmcInput = document.getElementById("cmcFilter");
         const colorInput = document.getElementById("colorFilter");
         const themeInput = document.getElementById("themeFilter");
 
-        const search = searchInput ? searchInput.value.toLowerCase() : "";
+        const search = searchInput ? searchInput.value.toLowerCase().trim() : "";
         const type = typeInput ? typeInput.value : "ALL";
         const cmc = cmcInput ? cmcInput.value : "ALL";
         const color = colorInput ? colorInput.value : "ALL";
@@ -1109,23 +1112,29 @@
 
         const filtered = masterCatalog.filter(c => {
             const cName = c.name ? c.name.toLowerCase() : "";
+            const cType = c.type ? c.type.toLowerCase() : "";
             const cArch = c.arch ? c.arch.toLowerCase() : "";
             const cSet = c.set ? c.set.toLowerCase() : "";
 
-            const matchSearch = cName.includes(search) || cArch.includes(search) || cSet.includes(search);
+            // Tribal & Multi-field Text Search (Name, Subtype/Tribe, Theme, Set)
+            const matchSearch = !search || cName.includes(search) || cType.includes(search) || cArch.includes(search) || cSet.includes(search);
             
+            // Type & Commander Filter
             const matchType = type === "ALL" || (type === "Legendary" && c.isLegend) || (c.type && c.type.includes(type));
             
+            // Mana Value / CMC Filter
             const matchCMC = cmc === "ALL" || 
                              (cmc === "5" && c.cmc >= 5) || 
                              (c.cmc !== undefined && c.cmc.toString() === cmc);
 
+            // Strict Color Filter Logic
             let matchColor = true;
             const cColors = c.colors || [];
             if (color === "MULTI") matchColor = cColors.length > 1;
             else if (color === "COLORLESS") matchColor = cColors.length === 0;
             else if (color !== "ALL") matchColor = cColors.includes(color);
 
+            // Theme Filter
             let matchTheme = true;
             if (theme === "LOTR") matchTheme = c.arch === "LOTR" || c.set === "LTR" || c.set === "LTC";
             else if (theme === "TMNT") matchTheme = c.arch === "TMNT" || c.set === "TMN";
@@ -1154,18 +1163,32 @@
         }
 
         const cmdName = dropdown.value;
-        const cmdCard = masterCatalog.find(c => c.name === cmdName) || { name: cmdName, set: "MTG", cmc: 0 };
-        
+        const cmdCard = masterCatalog.find(c => c.name === cmdName) || { name: cmdName, set: "MTG", cmc: 0, colors: [] };
+        const cmdColors = cmdCard.colors || [];
+
         const display = document.getElementById("deckDisplay");
         const analyticsPanel = document.getElementById("deckAnalyticsPanel");
         if (display) display.style.display = "grid";
         if (analyticsPanel) analyticsPanel.style.display = "block";
 
-        const pool = masterCatalog.filter(c => c.name !== cmdName);
-        const creatures = pool.filter(c => c.type && c.type.includes("Creature"));
-        const spells = pool.filter(c => c.type && (c.type.includes("Instant") || c.type.includes("Sorcery") || c.type.includes("Enchantment")));
-        const artifacts = pool.filter(c => c.type && c.type.includes("Artifact"));
-        const lands = pool.filter(c => c.type && c.type.includes("Land") && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
+        // COLOR IDENTITY FILTERING: Only include cards whose colors are a subset of Commander's colors
+        const validColorPool = masterCatalog.filter(c => {
+            if (c.name === cmdName) return false; // Exclude Commander from deck body
+            if (!c.colors || c.colors.length === 0) return true; // Colorless artifacts/lands fit any deck
+            return c.colors.every(col => cmdColors.includes(col));
+        });
+
+        // SYNERGY SORTING: Prioritize cards that match the Commander's archetype/theme
+        const sortedPool = [...validColorPool].sort((a, b) => {
+            const aMatch = (a.arch === cmdCard.arch || a.set === cmdCard.set) ? 1 : 0;
+            const bMatch = (b.arch === cmdCard.arch || b.set === cmdCard.set) ? 1 : 0;
+            return bMatch - aMatch;
+        });
+
+        const creatures = sortedPool.filter(c => c.type && c.type.includes("Creature"));
+        const spells = sortedPool.filter(c => c.type && (c.type.includes("Instant") || c.type.includes("Sorcery") || c.type.includes("Enchantment")));
+        const artifacts = sortedPool.filter(c => c.type && c.type.includes("Artifact"));
+        const lands = sortedPool.filter(c => c.type && c.type.includes("Land") && !["Swamp","Forest","Plains","Mountain","Island"].includes(c.name));
 
         const selectedCreatures = creatures.slice(0, 32);
         const selectedSpells = spells.slice(0, 18);
@@ -1183,13 +1206,13 @@
             display.innerHTML = `
                 <div class="deck-col">
                     <h3>Command Zone (1)</h3>
-                    <ul class="deck-list"><li><strong>1x ${cmdName} (${cmdCard.set || 'MTG'})</strong></li></ul>
+                    <ul class="deck-list"><li><strong>1x ${cmdName} (${cmdCard.set || 'MTG'}) [${cmdColors.join('/') || 'Colorless'}]</strong></li></ul>
                     <h3>Synergy Creatures (${selectedCreatures.length})</h3>
-                    <ul class="deck-list">${selectedCreatures.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
+                    <ul class="deck-list">${selectedCreatures.map(c => `<li><span>1x ${c.name} (${c.arch})</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
                 </div>
                 <div class="deck-col">
                     <h3>Spells & Enchantments (${selectedSpells.length})</h3>
-                    <ul class="deck-list">${selectedSpells.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
+                    <ul class="deck-list">${selectedSpells.map(c => `<li><span>1x ${c.name} (${c.arch})</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
                     <h3>Ramp & Artifacts (${selectedArtifacts.length})</h3>
                     <ul class="deck-list">${selectedArtifacts.map(c => `<li><span>1x ${c.name}</span><span style="color:var(--text-muted);">${c.cmc} CMC</span></li>`).join("")}</ul>
                 </div>
@@ -1205,6 +1228,7 @@
             `;
         }
     }
+        
 
     function renderManaCurve(deck) {
         const chart = document.getElementById("manaChart");
