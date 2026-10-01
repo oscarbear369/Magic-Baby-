@@ -126,16 +126,6 @@
         .card-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
         .card-type { font-size: 0.8rem; color: var(--text-muted); }
 
-        .tag {
-            display: inline-block;
-            background-color: #334155;
-            color: #cbd5e1;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-top: 4px;
-        }
-
         .deck-output {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -224,7 +214,21 @@
         "Tetsuko Umezawa, Pursuer": "Legendary Creature",
         "Arni, Renowned Champion": "Legendary Creature",
         "Teyo, Lightshield Expert": "Legendary Creature",
-        "Koth, the Geomancer": "Planeswalker"
+        "Koth, the Geomancer": "Planeswalker",
+        "Thranduil, Sindarin Liege": "Legendary Creature",
+        "Bilbo Baggins, Burglar": "Legendary Creature",
+        "Beorn, Reluctant Host": "Legendary Creature",
+        "Tom, Bert, and William": "Legendary Creature",
+        "Galion, Elvenking's Butler": "Legendary Creature",
+        "Bombur, Gentle Dreamer": "Legendary Creature",
+        "Gollum the Abandoned": "Legendary Creature",
+        "Azog, Moria's Ruin": "Legendary Creature",
+        "Bolg of the North": "Legendary Creature",
+        "Dori, Bearer of Friends": "Legendary Creature",
+        "Gandalf, Spark Starter": "Legendary Creature",
+        "Gollum, Silent Slinker": "Legendary Creature",
+        "Lorcan, Warlock Collector": "Legendary Creature",
+        "Taborax, Hope's Demise": "Legendary Creature"
     };
 
     function initApp() {
@@ -233,11 +237,11 @@
             const isLeg = !!legendsMap[name];
             let cardType = isLeg ? legendsMap[name] : "Creature";
 
-            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town"].includes(name)) {
+            if (["Swamp","Forest","Plains","Mountain","Island","Meticulous Commons","Slingerquill Annex","Vigorbloom Annex","Goblin-town","Mirkwood"].includes(name)) {
                 cardType = "Land";
-            } else if (["Arcane Signet","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone"].includes(name)) {
+            } else if (["Arcane Signet","Chromatic Lantern","Talisman of Impulse","Hedron Archive","Mind Stone","Reckoner Bankbuster","Mirage Mirror","Sting, Bilbo's Sword","The Endstone","Thrór's Map"].includes(name)) {
                 cardType = "Artifact";
-            } else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality"].includes(name)) {
+            } else if (["Brotherhood's End","Kindred Judgment","Fatehold Charm","Wrath of the Bloodmane","Bilbo's Deadly Slice","Gnashing of Teeth","Pillage the Bog","Gleeful Sabotage","Compel Brutality","Restore with Empathy","Gathering of Darkness","Tidings of War","Rage Into the Valley","Doom Foretold","Summon: Fenrir","Syphon Essence","Firja's Retribution","Vivien's Talent","Animist's Awakening","Glimmerburst","Walk with the Ancestors","Plasma Bolt","Surgical Precision","Tethermage's Advantage","No Admittance","Fulminous Forte","Cruel Calculations","Flourishing Grapple","Something Worth Saving","Artificer's Acumen","Vindicate's Triumph","Giant Growth","Ritual of Rejuvenation","Soul Salvage","Countersculpt","Extended Absence","Theorix Charm","Sphinx's Approach"].includes(name)) {
                 cardType = "Instant/Sorcery";
             }
 
